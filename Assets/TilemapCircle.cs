@@ -20,7 +20,7 @@ public class TilemapCircle : MonoBehaviour
 
     private Color32[] colorsPerTile;
 
-    private Vector3[] circlePoints;
+    private Vector3[] circleNormals;
     private float[] circleHeights;
 
     private int lastHeight;
@@ -107,7 +107,7 @@ public class TilemapCircle : MonoBehaviour
                     this, 
                     (width * i) / renderers.Length,
                     Mathf.Min((width * (i + 1)) / renderers.Length, width),
-                    circlePoints,
+                    circleNormals,
                     circleHeights,
                     colorsPerTile);
             }
@@ -124,8 +124,8 @@ public class TilemapCircle : MonoBehaviour
 
         width = (((int)((float)height * Mathf.PI * 2.0f)) / 4) * 4;
 
-        if (circlePoints == null || circlePoints.Length != width)
-            circlePoints = new Vector3[width];
+        if (circleNormals == null || circleNormals.Length != width)
+            circleNormals = new Vector3[width];
 
         if (circleHeights == null || circleHeights.Length != height + 1)
             circleHeights = new float[height + 1];
@@ -136,9 +136,9 @@ public class TilemapCircle : MonoBehaviour
         Random.seed = seed;
         for (int i = 0; i < tiles.Length; i++)
         {
-            //if (Random.value > 0.85f)
-            //    tiles[i] = 0;
-            //else
+            if (Random.value > 0.85f)
+                tiles[i] = 0;
+            else
                 tiles[i] = (byte)Random.Range(1, 256);
         }
 
@@ -162,8 +162,8 @@ public class TilemapCircle : MonoBehaviour
         for (int i = 0; i < width; i++)
         {
             float angle = i * angleStep;
-            circlePoints[i].x = Mathf.Sin(angle);
-            circlePoints[i].y = Mathf.Cos(angle);
+            circleNormals[i].x = Mathf.Sin(angle);
+            circleNormals[i].y = Mathf.Cos(angle);
         }
 
         circleHeights[0] = (height - 1) * TILE_SIZE;
@@ -179,8 +179,6 @@ public class TilemapCircle : MonoBehaviour
 
             circleHeights[i] = r2;
         }
-
-        //Debug.Log(circleHeights[0] + " / " + circleHeights[circleHeights.Length - 1]);
     }
 
     public byte GetTile(int tileX, int tileY)
@@ -284,9 +282,23 @@ public class TilemapCircle : MonoBehaviour
         return new Vector3(dx / distance, dy / distance, 0.0f);
     }
 
+    public Vector3 GetNormalFromTileCoordinate(int tileX, int tileY)
+    {
+        tileX = tileX % width;;
+
+        return circleNormals[tileX];
+    }
+
     public Vector3 GetTangentFromPosition(Vector3 position)
     {
         Vector3 normal = GetNormalFromPosition(position);
+
+        return new Vector3(normal.y, -normal.x, 0.0f);
+    }
+
+    public Vector3 GetTangentFromTileCoordinate(int tileX, int tileY)
+    {
+        Vector3 normal = GetNormalFromTileCoordinate(tileX, tileY);
 
         return new Vector3(normal.y, -normal.x, 0.0f);
     }
@@ -336,8 +348,6 @@ public class TilemapCircle : MonoBehaviour
             (circleHeights[0] * 2.0f * Mathf.PI) / width,
             (circleHeights[circleHeights.Length - 1] * 2.0f * Mathf.PI) / width) * TILE_SIZE_INV;
 
-        //Debug.Log(hitInfo.distance + " / " + hitInfo.floorDistance);
-
         return hitInfo;
     }
 
@@ -347,8 +357,16 @@ public class TilemapCircle : MonoBehaviour
 
         float dx = origin.x - transform.position.x;
         float dy = origin.y - transform.position.y;
+        float originDistance = Mathf.Sqrt(dx * dx + dy * dy);
 
-        hitInfo.originMapDistance = Mathf.Sqrt(dx * dx + dy * dy);
+        Vector3 target;
+        float targetdx;
+        float targetdy;
+        float targetDistance;
+        float segmentSize;
+        float tangentDistance;
+
+        hitInfo.originMapDistance = originDistance;
 
         if (hitInfo.originMapDistance < 0.00001f)
             hitInfo.originMapDistance = 0.00001f;
@@ -371,40 +389,188 @@ public class TilemapCircle : MonoBehaviour
 
         if (direction == Vector3.right)
         {
+            target = origin + hitInfo.originTangent * len;
+            targetdx = target.x - transform.position.x;
+            targetdy = target.y - transform.position.y;
+            targetDistance = Mathf.Sqrt(targetdx * targetdx + targetdy * targetdy);
 
-        }
-        else if (direction == Vector3.left)
-        {
+            if (originDistance > circleHeights[circleHeights.Length - 1])
+            {
+                //Origin point outside, not hit!
+                return false;
+            }
 
-        }
-        else if (direction == Vector3.up)
-        {
-
-        }
-        else if (direction == Vector3.down)
-        {
-            hitInfo.hitTileX = (int) ((hitInfo.originMapAngle / (Mathf.PI * 2.0f)) * width);
-            hitInfo.hitTileX = hitInfo.hitTileX % width;
-
-            hitInfo.hitTileY = height - 1;
             for (int i = 1; i < circleHeights.Length; i++)
             {
-                if (hitInfo.originMapDistance < circleHeights[i])
+                if (originDistance < circleHeights[i])
                 {
                     hitInfo.hitTileY = i - 1;
                     break;
                 }
             }
 
-            while (hitInfo.hitTileY > 0 && GetTile(hitInfo.hitTileX, hitInfo.hitTileY) == 0)
-                hitInfo.hitTileY--;
+            segmentSize = (circleHeights[hitInfo.hitTileY] * 2.0f * Mathf.PI) / width;
+            tangentDistance = ((hitInfo.originMapAngle / (Mathf.PI * 2.0f)) * width);
 
-            hitInfo.hitDistance = hitInfo.originMapDistance - circleHeights[hitInfo.hitTileY + 1];
+            hitInfo.hitTileX = (int)tangentDistance;
+            hitInfo.hitTileX = (hitInfo.hitTileX + 1) % width;
+
+            len -= segmentSize * (Mathf.Ceil(tangentDistance) - tangentDistance);
+
+            while (hitInfo.hitTileX < width && len >= 0)
+            {
+                if (GetTile(hitInfo.hitTileX, hitInfo.hitTileY) != 0)
+                {
+                    hitInfo.hitNormal = -GetTangentFromTileCoordinate(hitInfo.hitTileX, hitInfo.hitTileY);
+
+                    hitInfo.hitPosition = transform.position + 
+                        circleNormals[hitInfo.hitTileX] * hitInfo.originMapDistance;
+
+                    hitInfo.hitDistance = (origin - hitInfo.hitPosition).magnitude;
+                    return true;
+                }
+
+                len -= segmentSize;
+
+                hitInfo.hitTileX++;
+            }
+        }
+        else if (direction == Vector3.left)
+        {
+            target = origin + hitInfo.originTangent * len;
+            targetdx = target.x - transform.position.x;
+            targetdy = target.y - transform.position.y;
+            targetDistance = Mathf.Sqrt(targetdx * targetdx + targetdy * targetdy);
+
+            if (originDistance > circleHeights[circleHeights.Length - 1])
+            {
+                //Origin point outside, not hit!
+                return false;
+            }
+
+            for (int i = 1; i < circleHeights.Length; i++)
+            {
+                if (originDistance < circleHeights[i])
+                {
+                    hitInfo.hitTileY = i - 1;
+                    break;
+                }
+            }
+
+            segmentSize = (circleHeights[hitInfo.hitTileY] * 2.0f * Mathf.PI) / width;
+            tangentDistance = ((hitInfo.originMapAngle / (Mathf.PI * 2.0f)) * width);
+
+            hitInfo.hitTileX = (int)tangentDistance;
+            hitInfo.hitTileX = (hitInfo.hitTileX - 1) % width;
+            if (hitInfo.hitTileX < 0)
+                hitInfo.hitTileX += width;
+
+            len -= segmentSize * (tangentDistance - Mathf.Floor(tangentDistance));
+
+            while (hitInfo.hitTileX >= 0 && len >= 0)
+            {
+                if (GetTile(hitInfo.hitTileX, hitInfo.hitTileY) != 0)
+                {
+                    hitInfo.hitNormal = GetTangentFromTileCoordinate(hitInfo.hitTileX + 1, hitInfo.hitTileY);
+
+                    hitInfo.hitPosition = transform.position + 
+                        circleNormals[(hitInfo.hitTileX + 1) % width] * hitInfo.originMapDistance;
+
+                    hitInfo.hitDistance = (origin - hitInfo.hitPosition).magnitude;
+                    return true;
+                }
+
+                len -= segmentSize;
+
+                hitInfo.hitTileX--;
+            }
+        }
+        else if (direction == Vector3.up)
+        {
+            target = origin + hitInfo.originNormal * len;
+            targetdx = target.x - transform.position.x;
+            targetdy = target.y - transform.position.y;
+            targetDistance = Mathf.Sqrt(targetdx * targetdx + targetdy * targetdy);
+
+            if (originDistance > circleHeights[circleHeights.Length - 1])
+            {
+                //Origin point outside, not hit!
+                return false;
+            }
+
+            hitInfo.hitTileX = (int) ((hitInfo.originMapAngle / (Mathf.PI * 2.0f)) * width);
+            hitInfo.hitTileX = hitInfo.hitTileX % width;
+
+            for (int i = 1; i < circleHeights.Length; i++)
+            {
+                if (originDistance < circleHeights[i])
+                {
+                    hitInfo.hitTileY = i;
+                    len -= circleHeights[i] - originDistance;
+                    break;
+                }
+            }
+
+            while (hitInfo.hitTileY < height && len >= 0)
+            {
+                if (GetTile(hitInfo.hitTileX, hitInfo.hitTileY) != 0)
+                {
+                    hitInfo.hitNormal = -hitInfo.originNormal;
+                    hitInfo.hitPosition = transform.position + hitInfo.originNormal * circleHeights[hitInfo.hitTileY];
+                    hitInfo.hitDistance = (origin - hitInfo.hitPosition).magnitude;
+                    return true;
+                }
+
+                if (hitInfo.hitTileY < height - 1 )
+                    len -= (circleHeights[hitInfo.hitTileY + 1] - circleHeights[hitInfo.hitTileY]);
+
+                hitInfo.hitTileY++;
+            }
+        }
+        else if (direction == Vector3.down)
+        {
+            target = origin - hitInfo.originNormal * len;
+            targetdx = target.x - transform.position.x;
+            targetdy = target.y - transform.position.y;
+            targetDistance = Mathf.Sqrt(targetdx * targetdx + targetdy * targetdy);
+
+            if (/*originDistance > circleHeights[circleHeights.Length - 1] &&*/
+                targetDistance > circleHeights[circleHeights.Length - 1])
+            {
+                //Target outside, no hit!
+                return false;
+            }
+
+            hitInfo.hitTileX = (int) ((hitInfo.originMapAngle / (Mathf.PI * 2.0f)) * width);
+            hitInfo.hitTileX = hitInfo.hitTileX % width;
+
+            for (int i = circleHeights.Length - 1; i >= 1; i--)
+            {
+                if (originDistance > circleHeights[i])
+                {
+                    hitInfo.hitTileY = i - 1;
+                    len -= originDistance - circleHeights[i];
+                    break;
+                }
+            }
+
+            while (hitInfo.hitTileY >= 0 && len > 0)
+            {
+                if (GetTile(hitInfo.hitTileX, hitInfo.hitTileY) != 0)
+                {
+                    hitInfo.hitNormal = hitInfo.originNormal;
+                    hitInfo.hitPosition = transform.position + hitInfo.originNormal * circleHeights[hitInfo.hitTileY + 1];
+                    hitInfo.hitDistance = (origin - hitInfo.hitPosition).magnitude;
+                    return true;
+                }
+
+                if (hitInfo.hitTileY > 0)
+                    len -= (circleHeights[hitInfo.hitTileY] - circleHeights[hitInfo.hitTileY - 1]);
+                hitInfo.hitTileY--;
+            }
         }
 
-        //Debug.Log(hitInfo.distance + " / " + hitInfo.floorDistance);
-
-        return true;
+        return false;
     }
     /// <summary>
     /// Returns the floor position closest to the given position

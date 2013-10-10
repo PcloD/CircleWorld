@@ -44,21 +44,33 @@ public class Avatar : MonoBehaviour
         float deltaY = velocityY * Time.deltaTime * scale;
         float deltaX = Input.GetAxis("Horizontal") * speed * Time.deltaTime * scale;
 
+		TileHitInfo hitInfo;
+
         if (deltaY > 0)
         {
             //Check against ceiling
-            if (GetTileAbove(position + normal * deltaY))
+            if (tileMapCircle.Raycast(
+                position + normal * (height * 0.5f * scale), 
+                Vector3.up, 
+                deltaY + (height * 0.5f * scale), 
+                out hitInfo))
             {
-                deltaY = 0.0f;
+                deltaY = -(hitInfo.hitDistance - (height * 0.5f * scale));
+
                 velocityY = 0.0f;
             }
         }
         else if (deltaY < 0)
         {
             //Check against floor
-            if (GetTileBelow(position + normal * deltaY))
+            if (tileMapCircle.Raycast(
+                position + normal * (height * 0.5f * scale), 
+                Vector3.down, 
+                -deltaY + (height * 0.5f * scale), 
+                out hitInfo))
             {
-                deltaY = 0;
+                deltaY = -(hitInfo.hitDistance - (height * 0.5f * scale));
+
                 velocityY = 0.0f;
 
                 if (Input.GetKeyDown(KeyCode.Z) || Input.GetKeyDown(KeyCode.Space))
@@ -74,15 +86,27 @@ public class Avatar : MonoBehaviour
 
         if (deltaX > 0)
         {
-            //Check against right
-            if (GetTileRight(position + tangent * deltaX))
-                deltaX = 0.0f;
+            //Check against right wall
+            if (tileMapCircle.Raycast(
+                position + normal * (height * 0.5f * scale), 
+                Vector3.right, 
+                deltaX + (width * 0.5f * scale), 
+                out hitInfo))
+            {
+                deltaX = (hitInfo.hitDistance - (width * 0.5f * scale));
+            }
         }
         else if (deltaX < 0)
         {
-            //Check against left
-            if (GetTileLeft(position + tangent * deltaX))
-                deltaX = 0.0f;
+            //Check against left wall
+            if (tileMapCircle.Raycast(
+                position + normal * (height * 0.5f * scale), 
+                Vector3.left, 
+                -deltaX + (width * 0.5f * scale), 
+                out hitInfo))
+            {
+                deltaX = -(hitInfo.hitDistance - (width * 0.5f * scale));
+            }
         }
 
         if (deltaX != 0)
@@ -153,28 +177,6 @@ public class Avatar : MonoBehaviour
         }
 
         return true;
-    }
-
-    public bool GetTileBelow(Vector3 position)
-    {
-        float scale = tileMapCircle.GetScaleFromPosition(position);
-        Vector3 tangent = tileMapCircle.GetTangentFromPosition(position);
-
-        int tileX, tileY;
-
-        if (tileMapCircle.GetTileCoordinatesFromPosition(position, out tileX, out tileY))
-            if (tileMapCircle.GetTile(tileX, tileY) != 0)
-                return true;
-
-        if (tileMapCircle.GetTileCoordinatesFromPosition(position + tangent * (width * 0.5f * scale), out tileX, out tileY))
-            if (tileMapCircle.GetTile(tileX, tileY) != 0)
-                return true;
-
-        if (tileMapCircle.GetTileCoordinatesFromPosition(position - tangent * (width * 0.5f * scale), out tileX, out tileY))
-            if (tileMapCircle.GetTile(tileX, tileY) != 0)
-                return true;
-
-        return false;
     }
 
     public bool GetTileAbove(Vector3 position)
@@ -322,26 +324,24 @@ public class Avatar : MonoBehaviour
         return average;
     }
 
-    /*
     public void OnDrawGizmosSelected()
     {
         OnDrawGizmos();
     }
 
-
     public void OnDrawGizmos()
     {
         if (tileMapCircle)
         {
-            int tileX, tileY;
-            tileMapCircle.GetTileFromPosition(transform.position, out tileX, out tileY);
-
-            Gizmos.DrawSphere(tileMapCircle.GetFloorPositionFromTile(tileX, tileY), 0.5f);
+            float scale = tileMapCircle.GetScaleFromPosition(transform.position);
+            Vector3 normal = tileMapCircle.GetNormalFromPosition(transform.position); //doesn't change with vertical position
+            Vector3 tangent = tileMapCircle.GetTangentFromPosition(transform.position); //doesn't change with vertical position
 
             Gizmos.color = Color.red;
-            Gizmos.DrawSphere(tileMapCircle.GetFloorPositionFromPosition(transform.position), 0.5f);
+            Gizmos.DrawLine(transform.position, transform.position + normal * height * scale);
+            Gizmos.color = Color.blue;
+            Gizmos.DrawLine(transform.position, transform.position + tangent * width * 0.5f * scale);
         }
     }
-    */
 }
 

@@ -10,7 +10,7 @@ public class TilemapSegmentRender : MonoBehaviour
     private int fromX;
     private int toX;
     private TilemapCircle map;
-    private Vector3[] circlePoints;
+    private Vector3[] circleNormals;
     private float[] circleHeights;
     private Color32[] colorsPerTile;
 
@@ -21,7 +21,7 @@ public class TilemapSegmentRender : MonoBehaviour
 
     private bool firstTime;
 
-    public void Init(TilemapCircle map, int fromX, int toX, Vector3[] circlePoints, float[] circleHeights, Color32[] colorsPerTile)
+    public void Init(TilemapCircle map, int fromX, int toX, Vector3[] circleNormals, float[] circleHeights, Color32[] colorsPerTile)
     {
         dirty = true;
         firstTime = true;
@@ -29,7 +29,7 @@ public class TilemapSegmentRender : MonoBehaviour
         this.map = map;
         this.fromX = fromX;
         this.toX = toX;
-        this.circlePoints = circlePoints;
+        this.circleNormals = circleNormals;
         this.circleHeights = circleHeights;
         this.colorsPerTile = colorsPerTile;
 
@@ -94,10 +94,10 @@ public class TilemapSegmentRender : MonoBehaviour
                 }
                 else
                 {
-                    p1 = circlePoints[x] * upRadius;
-                    p2 = circlePoints[(x + 1) % map.width] * upRadius;
-                    p3 = circlePoints[(x + 1) % map.width] * downRadius;
-                    p4 = circlePoints[x] * downRadius;
+                    p1 = circleNormals[x] * upRadius;
+                    p2 = circleNormals[(x + 1) % map.width] * upRadius;
+                    p3 = circleNormals[(x + 1) % map.width] * downRadius;
+                    p4 = circleNormals[x] * downRadius;
                 }
 
                 vertices[vertexOffset + 0] = p1;

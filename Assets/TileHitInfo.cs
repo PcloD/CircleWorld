@@ -12,8 +12,8 @@ public struct TileHitInfo
     public int hitTileY;
 
     public float hitDistance;
-    public float hitNormal;
-
+    public Vector3 hitNormal;
+    public Vector3 hitPosition;
 
     public float scale;
 }
