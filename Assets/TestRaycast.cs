@@ -25,9 +25,12 @@ public class TestRaycast : MonoBehaviour
 
     void OnDrawGizmos()
     {
-
         if (map)
         {
+            //int tileX, tileY;
+            //map.GetTileCoordinatesFromPosition(transform.position, out tileX, out tileY);
+            //Debug.Log(tileX + " / " + tileY);
+
             TileHitInfo hitInfo;
 
             Vector3 origin = Vector3.zero;

@@ -26,6 +26,11 @@ public class TilemapCircle : MonoBehaviour
     private int lastHeight;
     private int lastWidth;
 
+    //Used when fiding tileY positions!
+    private float height0;
+    private float k;
+    private float logk;
+
 	// Use this for initialization
 	void Start () 
     {
@@ -166,9 +171,13 @@ public class TilemapCircle : MonoBehaviour
             circleNormals[i].y = Mathf.Cos(angle);
         }
 
-        circleHeights[0] = (height - 1) * TILE_SIZE;
 
-        float k = -((width / (Mathf.PI * 2.0f))) / (1 - (width / (Mathf.PI * 2.0f)));
+
+        height0 = (height - 1) * TILE_SIZE;
+        k = -((width / (Mathf.PI * 2.0f))) / (1 - (width / (Mathf.PI * 2.0f)));
+        logk = Mathf.Log(k);
+
+        circleHeights[0] = height0;
 
         for (int i = 1; i <= height; i++)
         {
@@ -217,6 +226,29 @@ public class TilemapCircle : MonoBehaviour
     }
     */
 
+    public int GetTileYFromDistance(float distance)
+    {
+        //This was taken from wolfram-alpha, by solving the radius relationship function
+        //Original function: http://www.wolframalpha.com/input/?i=g%280%29%3Dk%2C+g%28n%2B1%29%3Dl+*+g%28n%29
+        //Solution: http://www.wolframalpha.com/input/?i=y+%3D+k+*+l%CB%86x+find+x (we use the solution over reals with y > 0)
+
+        //int tileY = (int) (Mathf.Log (distance / height0) / Mathf.Log (k));
+        int tileY = (int) (Mathf.Log (distance / height0) / logk);
+
+        return tileY;
+    }
+
+    public int GetTileXFromAngle(float angle)
+    {
+        int tileX = Mathf.FloorToInt((angle / (Mathf.PI * 2.0f)) * width);
+
+        tileX = tileX % width;
+        if (tileX < 0)
+            tileX += width;
+
+        return tileX;
+    }
+
     /// <summary>
     /// Returns the coordinates of the tile closest to the given position
     /// </summary>
@@ -226,35 +258,13 @@ public class TilemapCircle : MonoBehaviour
         float dy = position.y - transform.position.y;
 
         float distance = Mathf.Sqrt(dx * dx + dy * dy);
-
-        if (distance >= circleHeights[circleHeights.Length - 1])
-        {
-            tileX = 0;
-            tileY = 0;
-
-            return false;
-        }
-
         float angle = -Mathf.Atan2(dy, dx) + Mathf.PI * 0.5f;
 
-        while (angle > Mathf.PI * 2.0f)
-            angle -= Mathf.PI * 2.0f;
+        tileY = GetTileYFromDistance(distance);
+        tileX = GetTileXFromAngle(angle);
 
-        while (angle < 0.0f)
-            angle += Mathf.PI * 2.0f;
-
-        tileX = (int) ((angle / (Mathf.PI * 2.0f)) * width);
-        tileX = tileX % width;
-
-        tileY = height - 1;
-        for (int i = 1; i < circleHeights.Length; i++)
-        {
-            if (distance < circleHeights[i])
-            {
-                tileY = i - 1;
-                break;
-            }
-        }
+        if (tileY >= height || tileY < 0)
+            return false;
 
         return true;
     }
