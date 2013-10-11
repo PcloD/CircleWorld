@@ -4,7 +4,7 @@ using System.Collections;
 public class TestRaycast : MonoBehaviour 
 {
     public TilemapCircle map;
-    public Vector3 direction = Vector3.down;
+    public TileDirection direction;
     public float len = 100.0f;
     public float radius = 0.25f;
 
@@ -36,28 +36,28 @@ public class TestRaycast : MonoBehaviour
             Vector3 origin = Vector3.zero;
             Vector3 target = Vector3.zero;
 
-            if (direction == Vector3.down)
+            if (direction == TileDirection.Down)
             {
                 origin = transform.position + map.GetNormalFromPosition(transform.position) * radius;
                 target = transform.position - map.GetNormalFromPosition(transform.position) * (len - radius);
             }
-            else if (direction == Vector3.up)
+            else if (direction == TileDirection.Up)
             {
                 origin = transform.position - map.GetNormalFromPosition(transform.position) * radius;
                 target = transform.position + map.GetNormalFromPosition(transform.position) * (len - radius);
             }
-            else if (direction == Vector3.right)
+            else if (direction == TileDirection.Right)
             {
                 origin = transform.position - map.GetTangentFromPosition(transform.position) * radius;
                 target = transform.position + map.GetTangentFromPosition(transform.position) * (len - radius);
             }
-            else if (direction == Vector3.left)
+            else if (direction == TileDirection.Left)
             {
                 origin = transform.position + map.GetTangentFromPosition(transform.position) * radius;
                 target = transform.position - map.GetTangentFromPosition(transform.position) * (len - radius);
             }
 
-            if (map.Raycast(origin, direction, len, out hitInfo))
+            if (map.RaycastSquare(origin, radius * 2.0f, direction, len, out hitInfo))
             {
                 //Debug.Log(string.Format("hit tileX: {0} tileY: {1} hitDistance: {2}", hitInfo.hitTileX, hitInfo.hitTileY, hitInfo.hitDistance));
                 Gizmos.color = Color.green;

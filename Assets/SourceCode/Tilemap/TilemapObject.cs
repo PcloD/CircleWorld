@@ -11,7 +11,7 @@ public class TilemapObject : MonoBehaviour
     public Vector2 size = new Vector2(1, 1);
     public Vector2 velocity;
 
-    public bool onFloor;
+    public TileHitFlags hitFlags;
 
     public virtual void Start () 
     {
@@ -38,33 +38,36 @@ public class TilemapObject : MonoBehaviour
 
         TileHitInfo hitInfo;
 
-        onFloor = false;
+        hitFlags = TileHitFlags.None;
 
         if (delta.y > 0)
         {
             //Check against ceiling
-            if (tileMapCircle.Raycast(
+            if (tileMapCircle.RaycastSquare(
                 position + normal * (size.y * 0.5f * scale), 
-                Vector3.up, 
+                size.x * scale,
+                TileDirection.Up, 
                 delta.y + (size.y * 0.5f * scale), 
                 out hitInfo))
             {
                 delta.y = -(hitInfo.hitDistance - (size.y * 0.5f * scale));
                 velocity.y = 0.0f;
+                hitFlags |= TileHitFlags.Up;
             }
         }
         else if (delta.y < 0)
         {
             //Check against floor
-            if (tileMapCircle.Raycast(
+            if (tileMapCircle.RaycastSquare(
                 position + normal * (size.y * 0.5f * scale), 
-                Vector3.down, 
+                size.x * scale,
+                TileDirection.Down, 
                 -delta.y + (size.y * 0.5f * scale), 
                 out hitInfo))
             {
                 delta.y = -(hitInfo.hitDistance - (size.y * 0.5f * scale));
                 velocity.y = 0.0f;
-                onFloor = true;
+                hitFlags |= TileHitFlags.Down;
             }
         }
 
@@ -77,27 +80,31 @@ public class TilemapObject : MonoBehaviour
         if (delta.x > 0)
         {
             //Check against right wall
-            if (tileMapCircle.Raycast(
+            if (tileMapCircle.RaycastSquare(
                 position + normal * (size.y * 0.5f * scale), 
-                Vector3.right, 
+                size.y * scale,
+                TileDirection.Right, 
                 delta.x + (size.x * 0.5f * scale), 
                 out hitInfo))
             {
                 delta.x = (hitInfo.hitDistance - (size.x * 0.5f * scale));
                 velocity.x = 0.0f;
+                hitFlags |= TileHitFlags.Right;
             }
         }
         else if (delta.x < 0)
         {
             //Check against left wall
-            if (tileMapCircle.Raycast(
+            if (tileMapCircle.RaycastSquare(
                 position + normal * (size.y * 0.5f * scale), 
-                Vector3.left, 
+                size.y * scale,
+                TileDirection.Left, 
                 -delta.x + (size.x * 0.5f * scale), 
                 out hitInfo))
             {
                 delta.x = -(hitInfo.hitDistance - (size.x * 0.5f * scale));
                 velocity.x = 0.0f;
+                hitFlags |= TileHitFlags.Left;
             }
         }
 
@@ -109,7 +116,7 @@ public class TilemapObject : MonoBehaviour
 
         transform.position = position;
         transform.localScale = Vector3.one * scale;
-        transform.up = normal;
+        transform.rotation = Quaternion.AngleAxis(-tileMapCircle.GetAngleFromPosition(position), Vector3.forward);
     }
 
     public bool MoveTo(Vector3 position)
@@ -160,10 +167,6 @@ public class TilemapObject : MonoBehaviour
     {
         if (tileMapCircle)
         {
-            //float scale = tileMapCircle.GetScaleFromPosition(transform.position);
-            //Vector3 normal = tileMapCircle.GetNormalFromPosition(transform.position);
-            //Vector3 tangent = tileMapCircle.GetTangentFromPosition(transform.position);
-
             Gizmos.color = Color.red;
             Gizmos.DrawLine(transform.position, transform.position + transform.up * size.y);
             Gizmos.color = Color.blue;
