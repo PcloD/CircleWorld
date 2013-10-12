@@ -10,7 +10,6 @@ public class UniverseView : MonoBehaviour
     {
         thingsContainer = new ThingsContainer();
         thingsContainer.Create(0);
-
     }
 
     public void Update()
@@ -36,22 +35,36 @@ public class UniverseView : MonoBehaviour
 
             for (int i = 0; i < amount; i++)
             {
+                Color color;
+
                 switch ((ThingType) things[i].type)
                 {
                     case ThingType.Galaxy:
-                        Gizmos.color = Color.blue;
-                        break;
+                        //color = Color.blue;
+                        continue;
+                        //break;
+
+                    case ThingType.SolarSystem:
+                        //color = Color.cyan;
+                        continue;
+                        //break;
 
                     case ThingType.Sun:
-                        Gizmos.color = Color.red;
+                        color = Color.yellow;
                         break;
 
                     default:
-                        Gizmos.color = Color.green;
+                        color = Color.green;
                         break;
                 }
 
-                Gizmos.DrawSphere(new Vector3(positions[i].x, positions[i].y, 0.0f), things[i].radius); 
+                Gizmos.color = color;
+
+                //if (things[i].safeRadius > 0)
+                //    Gizmos.DrawWireSphere(new Vector3(positions[i].x, positions[i].y, 0.0f), things[i].safeRadius); 
+
+                if (things[i].radius > 0)
+                    Gizmos.DrawSphere(new Vector3(positions[i].x, positions[i].y, 0.0f), things[i].radius); 
             }
         }
     }

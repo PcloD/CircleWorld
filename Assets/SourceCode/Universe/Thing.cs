@@ -13,8 +13,8 @@ namespace Universe
         public ushort angle; //Rotation relative to parent (centidegrees (100 -> 1 degree, 36000 -> 360 degrees)
         public ushort distance; //Distance relative to parent
 
-        public ushort rotationPeriod; //seconds to complete a full rotation around itself
-        public ushort orbitalPeriod; //seconds to complete a full rotation around the parent
+        public short rotationPeriod; //seconds to complete a full rotation around itself (negative -> rotation counterclockwise)
+        public short orbitalPeriod; //seconds to complete a full rotation around the parent (negative -> rotation counterclockwise)
 
         public ushort radius; //Radius
         public ushort safeRadius; //Radius at which things can orbit this thing without colliding with any brother

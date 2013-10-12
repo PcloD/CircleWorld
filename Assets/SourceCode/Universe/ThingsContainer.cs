@@ -24,33 +24,94 @@ namespace Universe
 
             random = new Random(seed);
 
-            AddSolarSystems();
+            AddGalaxy();
 
             UpdateBrothers(0);
         }
 
-        private void AddSolarSystems()
+        private void AddGalaxy()
         {
-            int orbits = 10;
+            int galaxyOrbits = 10;
 
-            ushort safeRadius = things[currentThing].safeRadius;
+            ushort galaxySafeRadius = things[currentThing].safeRadius;
+            ushort solarSystemRadius = (ushort) (galaxySafeRadius / (galaxyOrbits * 2));
 
-            ushort solarSystemSize = (ushort) (safeRadius / (orbits * 2));
-
-            for (int i = 0; i < orbits; i++)
+            for (int i = 0; i < galaxyOrbits; i++)
             {
-                ushort solarSystemDistance = (ushort) ((safeRadius * i) / orbits);
+                ushort solarSystemDistance = (ushort) ((galaxySafeRadius * i) / galaxyOrbits);
 
-                int solarSystems = 5;
+                int solarSystems = random.Next(
+                    (Math.Max(i * 5, 1) + 1) / 2, 
+                    Math.Max(i * 5, 1) + 1
+                );
 
-                ushort solarSystemOrbitalPerdiod = (ushort) random.Next(10, 60);
+                short solarSystemOrbitalPerdiod = (short) random.Next(30, 60);
+                if (random.Next(0, 2) == 0)
+                    solarSystemOrbitalPerdiod = (short) -solarSystemOrbitalPerdiod;
 
                 for (int j = 0; j < solarSystems; j++)
                 {
-                    ushort angle = (ushort) ((36000 * j) / solarSystems);
+                    ushort solarSystemAngle = (ushort) ((36000 * j) / solarSystems);
 
-                    PushThing(ThingType.SolarSystem, angle, solarSystemDistance, 0, solarSystemOrbitalPerdiod, solarSystemSize, solarSystemSize, random.Next());
+                    PushThing(ThingType.SolarSystem, solarSystemAngle, solarSystemDistance, 0, solarSystemOrbitalPerdiod, 0, solarSystemRadius, random.Next());
+                    {
+                        int suns = random.Next(1, 3);
 
+                        ushort solarSystemSafeRadius = things[currentThing].safeRadius;
+
+                        ushort sunRadius = (ushort) random.Next(
+                            (solarSystemRadius / 8) / 2,
+                            (solarSystemRadius / 8)
+                        );
+
+                        if (suns == 1)
+                        {
+                            PushThing(ThingType.Sun, 0, 0, 0, 1, sunRadius, 0, 0);
+                            PopThing();
+                        }
+                        else
+                        {
+                            ushort sunDistance = (ushort) (sunRadius * 4 / 3);
+                            short sunOrbitalPerdiod = (short) random.Next(30, 60);
+                            if (random.Next(0, 2) == 0)
+                                sunOrbitalPerdiod = (short) -sunOrbitalPerdiod;
+
+                            for (int k = 0; k < suns; k++)
+                            {
+                                ushort sunAngle = (ushort) ((36000 * k) / suns);
+
+                                PushThing(ThingType.Sun, sunAngle, sunDistance, 0, sunOrbitalPerdiod, sunRadius, 0, 0);
+                                PopThing();
+                            }
+                        }
+
+                        int planetsOrbits = random.Next(1, 8);
+
+                        ushort planetSafeRadius = (ushort) ((solarSystemSafeRadius - sunRadius * 6) / (planetsOrbits * 2));
+
+                        for (int l = 0; l < planetsOrbits; l++)
+                        {
+                            ushort planetDistance = (ushort) (sunRadius * 6 + ((solarSystemSafeRadius - sunRadius * 6) * l) / planetsOrbits);
+
+                            ushort planetAngle = (ushort) random.Next(0, 36000);
+
+                            short planetRotationPeriod = (short) random.Next(30, 60);
+                            if (random.Next(0, 2) == 0)
+                                planetRotationPeriod = (short) -planetRotationPeriod;
+
+                            short planetOrbitationPeriod = (short) random.Next(30, 60);
+                            if (random.Next(0, 2) == 0)
+                                planetOrbitationPeriod = (short) -planetOrbitationPeriod;
+
+                            int planetSeed = random.Next();
+
+                            ushort planetRadius = (ushort) random.Next(planetSafeRadius / 16, planetSafeRadius / 9);
+
+                            PushThing(ThingType.Planet, planetAngle, planetDistance, planetRotationPeriod, planetOrbitationPeriod, planetRadius, planetSafeRadius, planetSeed);
+                            PopThing();
+                        }
+
+                    }
                     PopThing();
                 }
             }
@@ -76,7 +137,7 @@ namespace Universe
             return index;
         }
 
-        private void PushThing(ThingType type, ushort angle, ushort distance, ushort rotationPeriod, ushort orbitalPeriod, ushort radius, ushort safeRadius, int seed)
+        private void PushThing(ThingType type, ushort angle, ushort distance, short rotationPeriod, short orbitalPeriod, ushort radius, ushort safeRadius, int seed)
         {
             things[currentThing].childs++;
 
@@ -120,8 +181,8 @@ namespace Universe
 
             angle += 6.28318531f * normalizedOrbitalPeriod; //360 degrees to radians
 
-            x += ((float) Math.Sin(angle)) * distance;
-            y += ((float) Math.Cos(angle)) * distance;
+            x += ((float) Math.Cos(angle)) * distance;
+            y += ((float) Math.Sin(angle)) * distance;
 
             thingsPositions[index].x = x;
             thingsPositions[index].y = y;
