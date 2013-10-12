@@ -6,7 +6,8 @@ namespace Universe
     {
         public float x;
         public float y;
-        public float rotation;
+        public float rotation; //in radians
+        public float radius;
     }
 }
 
