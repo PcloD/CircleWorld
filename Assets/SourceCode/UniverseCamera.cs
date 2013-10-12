@@ -9,50 +9,82 @@ public class UniverseCamera : MonoBehaviour
     private Camera cam;
     private bool moving;
 
-    private Vector3 movingFromMouse;
-    private Vector3 movingFromWorld;
+    private Vector3 movingFromInputPosition;
+    private Vector3 movingFromWorldPosition;
 
     public void Awake()
     {
         cam = camera;
-        Input.simulateMouseWithTouches = true;
     }
 
     public void Update()
     {
-        if (!moving)
+        UpdateZoom();
+
+        UpdateMove();
+    }
+
+    private void UpdateZoom()
+    {
+        if (moving)
+            return;
+
+        if (Application.platform == RuntimePlatform.Android ||
+            Application.platform == RuntimePlatform.IPhonePlayer)
         {
+            //Use touch
+
+        }
+        else
+        {
+            //Use mouse
             float zoom = Input.GetAxis("Mouse ScrollWheel");
             cameraDistance -= cameraDistance * zoom * zoomSpeed * Time.deltaTime;
         }
 
         cam.orthographicSize = cameraDistance * scale;
+    }
 
-        if (Input.GetMouseButtonDown(0))
+    private void UpdateMove()
+    {
+        Vector3 movingToInputPosition = movingFromInputPosition;
+
+        if (Application.platform == RuntimePlatform.Android ||
+            Application.platform == RuntimePlatform.IPhonePlayer)
         {
-            moving = true;
-            movingFromMouse = Input.mousePosition;
-            movingFromWorld = cam.ScreenToWorldPoint(movingFromMouse);
+            //Use touch
         }
-        else if (Input.GetMouseButtonUp(0))
+        else
         {
-            moving = false;
+            //Use mouse
+            if (Input.GetMouseButtonDown(0))
+            {
+                moving = true;
+                movingFromInputPosition = Input.mousePosition;
+                movingFromWorldPosition = cam.ScreenToWorldPoint(movingFromInputPosition);
+            }
+            else if (Input.GetMouseButtonUp(0))
+            {
+                moving = false;
+            }
+
+            if (moving)
+                movingToInputPosition = Input.mousePosition;
         }
 
         if (moving)
         {
-            Vector3 movingToMouse = Input.mousePosition;
-            Vector3 movingToWorld = cam.ScreenToWorldPoint(movingToMouse);
+            Vector3 movingToWorldPosition = cam.ScreenToWorldPoint(movingToInputPosition);
 
-            if (movingFromMouse != movingToMouse)
+            if (movingFromInputPosition != movingToInputPosition)
             {
-                Vector3 delta = movingToWorld - movingFromWorld;
+                Vector3 delta = movingToWorldPosition - movingFromWorldPosition;
                 delta.z = 0;
 
                 transform.position -= delta;
 
-                movingFromMouse = movingToMouse;
-                movingFromWorld = cam.ScreenToWorldPoint(movingFromMouse);
+                movingFromInputPosition = movingToInputPosition;
+                movingFromWorldPosition = cam.ScreenToWorldPoint(movingFromInputPosition);
             }
         }
 

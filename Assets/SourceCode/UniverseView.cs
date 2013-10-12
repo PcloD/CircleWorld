@@ -53,7 +53,6 @@ public class UniverseView : MonoBehaviour
         if (mesh == null)
             mesh = new Mesh();
 
-
         int vertexOffset = 0;
 
         if (firstTime)
@@ -103,10 +102,17 @@ public class UniverseView : MonoBehaviour
         {
             ThingPosition position = thingsPositions[thingsToRender[i]];
 
-            vertices[vertexOffset + 0] = new Vector3(position.x - position.radius, position.y - position.radius, 0);
-            vertices[vertexOffset + 1] = new Vector3(position.x - position.radius, position.y + position.radius, 0);
-            vertices[vertexOffset + 2] = new Vector3(position.x + position.radius, position.y + position.radius, 0);
-            vertices[vertexOffset + 3] = new Vector3(position.x + position.radius, position.y - position.radius, 0);
+            vertices[vertexOffset + 0].x = position.x - position.radius;
+            vertices[vertexOffset + 0].y = position.y - position.radius;
+
+            vertices[vertexOffset + 1].x = position.x - position.radius;
+            vertices[vertexOffset + 1].y = position.y + position.radius;
+
+            vertices[vertexOffset + 2].x = position.x + position.radius;
+            vertices[vertexOffset + 2].y = position.y + position.radius;
+
+            vertices[vertexOffset + 3].x = position.x + position.radius;
+            vertices[vertexOffset + 3].y = position.y - position.radius;
 
             vertexOffset += 4;
         }

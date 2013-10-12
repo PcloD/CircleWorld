@@ -1,4 +1,4 @@
-Shader "Vertex Color Aplha" 
+Shader "Vertex Color Alpha" 
 {
 	Properties {
 	    //_Color ("Main Color", Color) = (1,1,1,1)
