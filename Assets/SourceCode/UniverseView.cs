@@ -8,7 +8,6 @@ public class UniverseView : MonoBehaviour
 
     private Mesh mesh;
     private Vector3[] vertices;
-    private Color32[] colors;
     private int[] triangles;
     private Vector2[] uvs;
     private bool firstTime = true;
@@ -25,7 +24,8 @@ public class UniverseView : MonoBehaviour
 
         thingsContainer.UpdatePositions(time);
 
-        UpdateMesh();
+        //if (firstTime)
+            UpdateMesh();
     }
 
     private void UpdateMesh()
@@ -41,9 +41,6 @@ public class UniverseView : MonoBehaviour
         if (vertices == null || vertices.Length != vertexCount)
             vertices = new Vector3[vertexCount];
 
-        if (colors == null || colors.Length != vertexCount)
-            colors = new Color32[vertexCount];
-
         if (uvs == null || uvs.Length != vertexCount)
             uvs = new Vector2[vertexCount];
 
@@ -51,7 +48,10 @@ public class UniverseView : MonoBehaviour
             triangles = new int[triangleCount];
 
         if (mesh == null)
+        {
             mesh = new Mesh();
+            mesh.MarkDynamic();
+        }
 
         int vertexOffset = 0;
 
@@ -67,16 +67,10 @@ public class UniverseView : MonoBehaviour
             {
                 Thing thing = things[thingsToRender[i]];
 
-                Color32 color = Color.white;
                 int textureId = (int) (((uint) thing.seed) % 16);
 
                 float uvx = (textureId % 4) / 4.0f;
                 float uvy = (textureId / 4) / 4.0f;
-
-                colors[vertexOffset + 0] = color;
-                colors[vertexOffset + 1] = color;
-                colors[vertexOffset + 2] = color;
-                colors[vertexOffset + 3] = color;
 
                 uvs[vertexOffset + 0] = new Vector2(uvx, 1.0f - uvy);
                 uvs[vertexOffset + 1] = new Vector2(uvx + tx - tt, 1.0f - uvy);
@@ -122,8 +116,8 @@ public class UniverseView : MonoBehaviour
         if (firstTime)
         {
             mesh.triangles = triangles;
-            mesh.colors32 = colors;
             mesh.uv = uvs;
+            mesh.bounds = new Bounds(Vector3.zero, new Vector3(ushort.MaxValue * 2, ushort.MaxValue * 2, 0.0f));
 
             GetComponent<MeshFilter>().sharedMesh = mesh;
         }

@@ -620,6 +620,16 @@ public class TilemapCircle : MonoBehaviour
                     len -= (circleHeights[hitInfo.hitTileY] - circleHeights[hitInfo.hitTileY - 1]);
                 hitInfo.hitTileY--;
             }
+
+            if (hitInfo.hitTileY < 0 && len >= circleHeights[1] - circleHeights[0])
+            {
+                //Core hit!
+                hitInfo.hitTileY = 0;
+                hitInfo.hitNormal = originNormal;
+                hitInfo.hitPosition = transform.position + originNormal * circleHeights[hitInfo.hitTileY];
+                hitInfo.hitDistance = (origin - hitInfo.hitPosition).magnitude;
+                return true;
+            }
         }
 
         return false;
