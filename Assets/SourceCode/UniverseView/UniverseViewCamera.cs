@@ -1,12 +1,15 @@
 using UnityEngine;
 
-public class UniverseCamera : MonoBehaviour
+public class UniverseViewCamera : MonoBehaviour
 {
+    private const float CAMERA_Z = -10;
+    
     public float cameraDistance = 10;
     public float zoomSpeed = 10;
     public float scale = 1.0f;
 
     private Camera cam;
+    private Transform trans;
     private bool moving;
 
     private Vector3 movingFromInputPosition;
@@ -18,17 +21,42 @@ public class UniverseCamera : MonoBehaviour
     private int zoomingTouchFinger2Id;
     private Vector3 zoomingTouchFinger1FromPosition;
     private Vector3 zoomingTouchFinger2FromPosition;
+    
+    private TilemapObjectView followingObject;
+    
+    public TilemapObjectView FollowingObject 
+    {
+        get { return followingObject; }
+        set { followingObject = value; }
+    }
 
     public void Awake()
     {
+        trans = transform;
         cam = camera;
+        
+        trans.position = new Vector3(0, 0, CAMERA_Z);
     }
 
-    public void Update()
+    public void UpdatePosition()
     {
         UpdateZoom();
-
-        UpdateMove();
+  
+        if (followingObject)
+            UpdateFollowingObject();
+        else
+            UpdateMove();
+    }
+    
+    private void UpdateFollowingObject()
+    {
+        Vector3 newPosition = followingObject.trans.position;
+        newPosition.z = CAMERA_Z;
+        
+        trans.position = newPosition;
+        trans.rotation = followingObject.trans.rotation;
+        
+        scale = followingObject.TilemapObject.Scale;
     }
 
     private void UpdateZoom()
@@ -138,16 +166,14 @@ public class UniverseCamera : MonoBehaviour
             if (movingFromInputPosition != movingToInputPosition)
             {
                 Vector3 delta = movingToWorldPosition - movingFromWorldPosition;
-                delta.z = 0;
+                Vector3 newPosition = trans.position - delta;
+                newPosition.z = CAMERA_Z;
 
-                transform.position -= delta;
+                trans.position = newPosition;
 
                 movingFromInputPosition = movingToInputPosition;
                 movingFromWorldPosition = cam.ScreenToWorldPoint(movingFromInputPosition);
             }
         }
-
     }
 }
-
-

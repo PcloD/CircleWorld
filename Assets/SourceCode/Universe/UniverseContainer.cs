@@ -2,7 +2,7 @@ using System;
 
 namespace Universe
 {
-    public class ThingsContainer
+    public class UniverseContainer
     {
         public const int MAX_THINGS = 32767;
 
@@ -12,12 +12,18 @@ namespace Universe
 
         public ushort[] thingsToRender = new ushort[MAX_THINGS];
         public ushort thingsToRenderAmount;
+        
+        public ushort startingPlanet;
 
         public void Create(int seed)
         {
             thingsAmount = new UniverseGeneratorDefault().Generate(seed, things);
 
             UpdateThingsToRender();
+            
+            startingPlanet = thingsToRender[200];
+            
+            UpdatePositions(0);
         }
 
         private void UpdateThingsToRender()

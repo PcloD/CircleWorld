@@ -3,7 +3,7 @@ using Universe;
 
 public class UniverseView : MonoBehaviour
 {
-    private ThingsContainer thingsContainer;
+    private UniverseContainer universeContainer;
     private float time;
 
     private Mesh mesh;
@@ -11,29 +11,63 @@ public class UniverseView : MonoBehaviour
     private int[] triangles;
     private Vector2[] uvs;
     private bool firstTime = true;
-
-    public void Start()
+    private Renderer rend;
+    
+    private ushort avatarPlanet;
+    
+    public UniverseContainer UniverseContainer
     {
-        thingsContainer = new ThingsContainer();
-        thingsContainer.Create(0);
+        get { return universeContainer; }
     }
-
-    public void Update()
+    
+    public ThingPosition AvatarPlanetPosition
+    {
+        get { return universeContainer.thingsPositions[avatarPlanet]; }
+    }
+    
+    public void Awake()
+    {
+        rend = renderer;
+    }
+    
+    public void Init(int seed)
+    {
+        universeContainer = new UniverseContainer();
+        
+        universeContainer.Create(seed);
+        
+        avatarPlanet = universeContainer.startingPlanet;
+    }
+ 
+    /// <summary>
+    /// Called by AvatarView() after updating it's position
+    /// </summary>
+    public void UpdatePositionsAndMesh()
     {
         time += Time.deltaTime;
 
-        thingsContainer.UpdatePositions(time);
-
-        //if (firstTime)
+        universeContainer.UpdatePositions(time);
+  
+        if (GetVisible())
             UpdateMesh();
+    }
+    
+    public void SetVisible(bool visible)
+    {
+        rend.enabled = visible;
+    }
+    
+    public bool GetVisible()
+    {
+        return rend.enabled;
     }
 
     private void UpdateMesh()
     {
-        Thing[] things = thingsContainer.things;
-        ThingPosition[] thingsPositions = thingsContainer.thingsPositions;
-        ushort[] thingsToRender = thingsContainer.thingsToRender;
-        ushort thingsToRenderAmount = thingsContainer.thingsToRenderAmount;
+        Thing[] things = universeContainer.things;
+        ThingPosition[] thingsPositions = universeContainer.thingsPositions;
+        ushort[] thingsToRender = universeContainer.thingsToRender;
+        ushort thingsToRenderAmount = universeContainer.thingsToRenderAmount;
 
         int vertexCount = thingsToRenderAmount * 4;
         int triangleCount = thingsToRenderAmount * 6;
@@ -94,19 +128,38 @@ public class UniverseView : MonoBehaviour
 
         for (int i = 0; i < thingsToRenderAmount; i++)
         {
-            ThingPosition position = thingsPositions[thingsToRender[i]];
-
-            vertices[vertexOffset + 0].x = position.x - position.radius;
-            vertices[vertexOffset + 0].y = position.y - position.radius;
-
-            vertices[vertexOffset + 1].x = position.x - position.radius;
-            vertices[vertexOffset + 1].y = position.y + position.radius;
-
-            vertices[vertexOffset + 2].x = position.x + position.radius;
-            vertices[vertexOffset + 2].y = position.y + position.radius;
-
-            vertices[vertexOffset + 3].x = position.x + position.radius;
-            vertices[vertexOffset + 3].y = position.y - position.radius;
+            ushort thingIndex = thingsToRender[i];
+            
+            if (avatarPlanet != thingIndex)
+            {
+                ThingPosition position = thingsPositions[thingIndex];
+            
+                vertices[vertexOffset + 0].x = position.x - position.radius;
+                vertices[vertexOffset + 0].y = position.y - position.radius;
+    
+                vertices[vertexOffset + 1].x = position.x - position.radius;
+                vertices[vertexOffset + 1].y = position.y + position.radius;
+    
+                vertices[vertexOffset + 2].x = position.x + position.radius;
+                vertices[vertexOffset + 2].y = position.y + position.radius;
+    
+                vertices[vertexOffset + 3].x = position.x + position.radius;
+                vertices[vertexOffset + 3].y = position.y - position.radius;
+            }
+            else
+            {
+                vertices[vertexOffset + 0].x = 0;
+                vertices[vertexOffset + 0].y = 0;
+    
+                vertices[vertexOffset + 1].x = 0;
+                vertices[vertexOffset + 1].y = 0;
+    
+                vertices[vertexOffset + 2].x = 0;
+                vertices[vertexOffset + 2].y = 0;
+    
+                vertices[vertexOffset + 3].x = 0;
+                vertices[vertexOffset + 3].y = 0;
+            }            
 
             vertexOffset += 4;
         }

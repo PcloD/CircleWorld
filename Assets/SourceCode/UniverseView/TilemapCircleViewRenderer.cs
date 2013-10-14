@@ -1,7 +1,8 @@
 using UnityEngine;
+using Universe;
 using System.Collections.Generic;
 
-public class TilemapSegmentRender : MonoBehaviour
+public class TilemapCircleViewRenderer : MonoBehaviour
 {
     public Mesh mesh;
 
@@ -9,8 +10,9 @@ public class TilemapSegmentRender : MonoBehaviour
 
     private int fromX;
     private int toX;
-    private TilemapCircle map;
-    private Vector3[] circleNormals;
+    private TilemapCircleView tilemapCircleView;
+    private TilemapCircle tilemapCircle;
+    private Vector2[] circleNormals;
     private float[] circleHeights;
     private Color32[] colorsPerTile;
 
@@ -21,16 +23,17 @@ public class TilemapSegmentRender : MonoBehaviour
 
     private bool firstTime;
 
-    public void Init(TilemapCircle map, int fromX, int toX, Vector3[] circleNormals, float[] circleHeights, Color32[] colorsPerTile)
+    public void Init(TilemapCircleView tilemapCircleView, int fromX, int toX, Color32[] colorsPerTile)
     {
         dirty = true;
         firstTime = true;
 
-        this.map = map;
+        this.tilemapCircleView = tilemapCircleView;
+        this.tilemapCircle = tilemapCircleView.TilemapCircle;
         this.fromX = fromX;
         this.toX = toX;
-        this.circleNormals = circleNormals;
-        this.circleHeights = circleHeights;
+        this.circleNormals = tilemapCircle.CircleNormals;
+        this.circleHeights = tilemapCircle.CircleHeights;
         this.colorsPerTile = colorsPerTile;
 
         if (!GetComponent<MeshRenderer>())
@@ -42,8 +45,8 @@ public class TilemapSegmentRender : MonoBehaviour
         if (mesh == null) 
             mesh = new Mesh();
 
-        int vertexCount = (toX - fromX) * map.height * 4;
-        int triangleCount = (toX - fromX) * map.height * 6;
+        int vertexCount = (toX - fromX) * tilemapCircle.Height * 4;
+        int triangleCount = (toX - fromX) * tilemapCircle.Height * 6;
 
         if (vertices == null || vertices.Length != vertexCount)
             vertices = new Vector3[vertexCount];
@@ -78,15 +81,18 @@ public class TilemapSegmentRender : MonoBehaviour
         float tx = 1.0f / 16.0f;
         float ty = 1.0f / 16.0f;
         float tt = 1.0f / 256.0f;
+        
+        int height = tilemapCircleView.TilemapCircle.Height;
+        int width = tilemapCircleView.TilemapCircle.Width;
 
-        for (int y = 0; y < map.height; y++)
+        for (int y = 0; y < height; y++)
         {
             float upRadius = circleHeights[y + 1];
             float downRadius = circleHeights[y];
 
             for (int x = fromX; x < toX; x++)
             {
-                byte tile = map.GetTile(x, y);
+                byte tile = tilemapCircle.GetTile(x, y);
 
                 if (tile == 0) //skip empty tiles
                 {
@@ -95,8 +101,8 @@ public class TilemapSegmentRender : MonoBehaviour
                 else
                 {
                     p1 = circleNormals[x] * upRadius;
-                    p2 = circleNormals[(x + 1) % map.width] * upRadius;
-                    p3 = circleNormals[(x + 1) % map.width] * downRadius;
+                    p2 = circleNormals[(x + 1) % width] * upRadius;
+                    p3 = circleNormals[(x + 1) % width] * downRadius;
                     p4 = circleNormals[x] * downRadius;
                 }
 
@@ -107,7 +113,7 @@ public class TilemapSegmentRender : MonoBehaviour
 
                 int textureId = tile % 4;
 
-                if (map.debugColor)
+                if (tilemapCircleView.debugColor)
                 {
                     colors[vertexOffset + 0] = Color.red;
                     colors[vertexOffset + 1] = Color.green;
@@ -158,7 +164,4 @@ public class TilemapSegmentRender : MonoBehaviour
 
         firstTime = false;
     }
-
 }
-
-

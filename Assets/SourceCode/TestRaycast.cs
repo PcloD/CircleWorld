@@ -1,9 +1,9 @@
 ﻿using UnityEngine;
-using System.Collections;
+using Universe;
 
 public class TestRaycast : MonoBehaviour 
 {
-    public TilemapCircle map;
+    public TilemapCircleView map;
     public TileDirection direction;
     public float len = 100.0f;
     public float radius = 0.25f;
@@ -33,37 +33,37 @@ public class TestRaycast : MonoBehaviour
 
             TileHitInfo hitInfo;
 
-            Vector3 origin = Vector3.zero;
-            Vector3 target = Vector3.zero;
+            Vector2 origin = Vector3.zero;
+            Vector2 target = Vector3.zero;
 
             if (direction == TileDirection.Down)
             {
-                origin = transform.position + map.GetNormalFromPosition(transform.position) * radius;
-                target = transform.position - map.GetNormalFromPosition(transform.position) * (len - radius);
+                origin = transform.position + (Vector3) (map.TilemapCircle.GetNormalFromPosition(transform.position) * radius);
+                target = transform.position - (Vector3) (map.TilemapCircle.GetNormalFromPosition(transform.position) * (len - radius));
             }
             else if (direction == TileDirection.Up)
             {
-                origin = transform.position - map.GetNormalFromPosition(transform.position) * radius;
-                target = transform.position + map.GetNormalFromPosition(transform.position) * (len - radius);
+                origin = transform.position - (Vector3) (map.TilemapCircle.GetNormalFromPosition(transform.position) * radius);
+                target = transform.position + (Vector3) (map.TilemapCircle.GetNormalFromPosition(transform.position) * (len - radius));
             }
             else if (direction == TileDirection.Right)
             {
-                origin = transform.position - map.GetTangentFromPosition(transform.position) * radius;
-                target = transform.position + map.GetTangentFromPosition(transform.position) * (len - radius);
+                origin = transform.position - (Vector3) (map.TilemapCircle.GetTangentFromPosition(transform.position) * radius);
+                target = transform.position + (Vector3) (map.TilemapCircle.GetTangentFromPosition(transform.position) * (len - radius));
             }
             else if (direction == TileDirection.Left)
             {
-                origin = transform.position + map.GetTangentFromPosition(transform.position) * radius;
-                target = transform.position - map.GetTangentFromPosition(transform.position) * (len - radius);
+                origin = transform.position + (Vector3) (map.TilemapCircle.GetTangentFromPosition(transform.position) * radius);
+                target = transform.position - (Vector3) (map.TilemapCircle.GetTangentFromPosition(transform.position) * (len - radius));
             }
 
-            if (map.RaycastSquare(origin, radius * 2.0f, direction, len, out hitInfo))
+            if (map.TilemapCircle.RaycastSquare(origin, radius * 2.0f, direction, len, out hitInfo))
             {
                 //Debug.Log(string.Format("hit tileX: {0} tileY: {1} hitDistance: {2}", hitInfo.hitTileX, hitInfo.hitTileY, hitInfo.hitDistance));
                 Gizmos.color = Color.green;
                 Gizmos.DrawSphere(transform.position, radius);
 
-                Vector3 hitPosition = origin - hitInfo.hitNormal * hitInfo.hitDistance;
+                Vector2 hitPosition = origin - hitInfo.hitNormal * hitInfo.hitDistance;
 
                 Gizmos.color = Color.red;
                 Gizmos.DrawLine(hitPosition, target);
