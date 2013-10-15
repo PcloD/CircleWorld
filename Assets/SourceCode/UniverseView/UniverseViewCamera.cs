@@ -37,7 +37,8 @@ public class UniverseViewCamera : MonoBehaviour
         
         trans.position = new Vector3(0, 0, CAMERA_Z);
     }
-
+ 
+    //Called by AvatarView.OnTilemapObjectUpdated()
     public void UpdatePosition()
     {
         UpdateZoom();

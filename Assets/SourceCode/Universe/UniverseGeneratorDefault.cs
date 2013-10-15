@@ -20,15 +20,15 @@ namespace Universe
                     Math.Max(i * 5, 1) + 1
                     );
 
-                short solarSystemOrbitalPerdiod = (short) random.Next(30, 60);
+                short solarSystemOrbitalPeriod = (short) random.Next(30, 60);
                 if (random.Next(0, 2) == 0)
-                    solarSystemOrbitalPerdiod = (short) -solarSystemOrbitalPerdiod;
+                    solarSystemOrbitalPeriod = (short) -solarSystemOrbitalPeriod;
 
                 for (int j = 0; j < solarSystems; j++)
                 {
                     ushort solarSystemAngle = (ushort) ((36000 * j) / solarSystems);
 
-                    PushThing(ThingType.SolarSystem, solarSystemAngle, solarSystemDistance, 0, solarSystemOrbitalPerdiod, 0, solarSystemRadius, 0);
+                    PushThing(ThingType.SolarSystem, solarSystemAngle, solarSystemDistance, 0, solarSystemOrbitalPeriod, 0, solarSystemRadius, 0);
                     {
                         int suns = random.Next(1, 3);
 
@@ -41,7 +41,7 @@ namespace Universe
 
                         if (suns == 1)
                         {
-                            PushThing(ThingType.Sun, 0, 0, 0, 1, sunRadius, 0, random.Next());
+                            PushThing(ThingType.Sun, 0, 0, 0, 0, Planet.GetClosestValidRadius(sunRadius), 0, random.Next());
                             PopThing();
                         }
                         else
@@ -55,7 +55,7 @@ namespace Universe
                             {
                                 ushort sunAngle = (ushort) ((36000 * k) / suns);
 
-                                PushThing(ThingType.Sun, sunAngle, sunDistance, 0, sunOrbitalPerdiod, sunRadius, 0, random.Next());
+                                PushThing(ThingType.Sun, sunAngle, sunDistance, 0, sunOrbitalPerdiod, Planet.GetClosestValidRadius(sunRadius), 0, random.Next());
                                 PopThing();
                             }
                         }
@@ -80,7 +80,7 @@ namespace Universe
 
                             ushort planetRadius = (ushort) random.Next(planetSafeRadius / 16, planetSafeRadius / 9);
 
-                            PushThing(ThingType.Planet, planetAngle, planetDistance, planetRotationPeriod, planetOrbitationPeriod, planetRadius, planetSafeRadius, random.Next());
+                            PushThing(ThingType.Planet, planetAngle, planetDistance, planetRotationPeriod, planetOrbitationPeriod, Planet.GetClosestValidRadius(planetRadius), planetSafeRadius, random.Next());
                             PopThing();
                         }
 

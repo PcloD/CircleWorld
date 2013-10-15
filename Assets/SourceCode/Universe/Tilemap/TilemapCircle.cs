@@ -8,14 +8,14 @@ namespace Universe
         public const float TILE_SIZE = 0.5f; 
         public const float TILE_SIZE_INV = 1.0f / TILE_SIZE;
     
-        private int seed;
-        private int height;
-        private int width;
+        protected int seed;
+        protected int height;
+        protected int width;
     
-        private byte[] tiles;
+        protected byte[] tiles;
     
-        private Vector2[] circleNormals;
-        private float[] circleHeights;
+        protected Vector2[] circleNormals;
+        protected float[] circleHeights;
     
         //Used when fiding tileY positions!
         private float height0;
@@ -24,8 +24,8 @@ namespace Universe
         
         private ITilemapCircleListener listener;
         
-        private Vector2 position;
-        private float rotation;
+        protected Vector2 position;
+        protected float rotation;
         
         public int Height
         {
@@ -83,17 +83,9 @@ namespace Universe
             UpdateTiles();
         }
         
-        private void UpdateTiles()
+        protected virtual void UpdateTiles()
         {
-            Random.seed = seed;
-            
-            for (int i = 0; i < tiles.Length; i++)
-            {
-                //if (Random.value > 0.85f)
-                //    tiles[i] = 0;
-                //else
-                    tiles[i] = (byte)Random.Range(1, 256);
-            }        
+            //TODO: Override!
         }
     
         private void UpdateData()
@@ -574,6 +566,11 @@ namespace Universe
             }
     
             return false;
+        }
+        
+        public virtual void Recycle()
+        {
+            listener = null;
         }
     }
 }

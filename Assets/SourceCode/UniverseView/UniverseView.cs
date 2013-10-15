@@ -1,55 +1,175 @@
 using UnityEngine;
 using Universe;
+using System.Collections.Generic;
 
 public class UniverseView : MonoBehaviour
 {
-    private UniverseContainer universeContainer;
-    private float time;
+    public UniverseViewFactory universeFactory;
+    
+    [HideInInspector]
+    [System.NonSerialized]
+    public AvatarView avatarView;
+
+    private UniverseContainer universeContainer = new UniverseContainer();
+    
+    private List<PlanetView> planetViews = new List<PlanetView>(32);
+    private List<TilemapObjectView> tilemapObjectViews = new List<TilemapObjectView>(32);
 
     private Mesh mesh;
     private Vector3[] vertices;
     private int[] triangles;
     private Vector2[] uvs;
-    private bool firstTime = true;
-    private Renderer rend;
     
-    private ushort avatarPlanet;
+    private Renderer rend;
+    private Transform trans;
     
     public UniverseContainer UniverseContainer
     {
         get { return universeContainer; }
     }
-    
-    public ThingPosition AvatarPlanetPosition
-    {
-        get { return universeContainer.thingsPositions[avatarPlanet]; }
-    }
-    
+        
     public void Awake()
     {
         rend = renderer;
+        trans = transform;
+        
+        trans.localPosition = Vector3.zero;
+        trans.localScale = Vector3.one;
+        trans.localRotation = Quaternion.identity;
     }
     
     public void Init(int seed)
     {
+        CreateUniverse(seed);
+        
+        AddAvatar();
+        
+        UpdateMesh(true);
+    }
+    
+    private void CreateUniverse(int seed)
+    {
         universeContainer = new UniverseContainer();
         
-        universeContainer.Create(seed);
+        universeContainer.Init(seed);
+    }
+    
+    public PlanetView GetPlanetView(ushort thingIndex)
+    {
+        for (int i = 0; i < planetViews.Count; i++)
+            if (planetViews[i].Planet.ThingIndex == thingIndex)
+                return planetViews[i];
         
-        avatarPlanet = universeContainer.startingPlanet;
+        if (planetViews.Count > 1)
+        {
+            universeContainer.ReturnPlanet(planetViews[0].Planet);
+            universeFactory.ReturnPlanet(planetViews[0]);
+            
+            planetViews.RemoveAt(0);
+        }
+        
+        Planet planet = universeContainer.GetPlanet(thingIndex);
+        
+        PlanetView planetView = universeFactory.GetPlanet(planet.Height);
+        
+        planetView.InitPlanet(planet, this);
+        
+        planetViews.Add(planetView);
+        
+        //Debug.Log(planetViews.Count);
+        
+        return planetView;
+    }
+    
+    private void AddAvatar()
+    {
+        avatarView = universeFactory.GetAvatar();
+        avatarView.Init(universeContainer.Avatar, this);
+        
+        AddTilemapObjectView(avatarView);
     }
  
     /// <summary>
-    /// Called by AvatarView() after updating it's position
+    /// Called by GameLogic
     /// </summary>
-    public void UpdatePositionsAndMesh()
+    public void UpdateUniverse(float deltaTime)
     {
-        time += Time.deltaTime;
-
-        universeContainer.UpdatePositions(time);
-  
-        if (GetVisible())
-            UpdateMesh();
+        universeContainer.UpdateUniverse(deltaTime);
+        
+        if (IsVisible())
+        {
+            UpdateMesh(false);
+        
+            UpdateClickOnPlanetToTravel();
+        }
+        
+        for (int i = 0; i < planetViews.Count; i++)
+            planetViews[i].OnTilemapCircleUpdated();
+        
+        for (int i = 0; i < tilemapObjectViews.Count; i++)
+            tilemapObjectViews[i].OnTilemapObjectUpdated();
+    }
+    
+    private void UpdateClickOnPlanetToTravel()
+    {
+        bool clickTravel = false;
+        Vector2 clickPosition = Vector2.zero;
+        
+        if (Application.platform == RuntimePlatform.Android || Application.platform == RuntimePlatform.IPhonePlayer)
+        {
+            if (Input.touchCount == 1 && Input.GetTouch(0).phase == TouchPhase.Began)
+            {
+                clickTravel = true;
+                clickPosition = Input.GetTouch(0).position;
+            }
+        }
+        else
+        {
+            if (Input.GetMouseButtonDown(0))
+            {
+                clickTravel = true;
+                clickPosition = Input.mousePosition;
+            }
+        }
+        
+        if (clickTravel)
+        {
+            Vector2 worldPos = Camera.main.ScreenToWorldPoint(clickPosition);
+            Vector2 worldPosTolerance = Camera.main.ScreenToWorldPoint(clickPosition + Vector2.right * (Screen.dpi > 0 ? Screen.dpi : 72) / 2.54f); //1 cm tolerance
+            
+            float clickTolerance = (worldPosTolerance - worldPos).magnitude;
+            
+            ushort closestThingIndex = ushort.MaxValue;
+            float closestThingDistance = float.MaxValue;
+            
+            ThingPosition[] thingsPositions = universeContainer.ThingsPositions;
+            ushort[] thingsToRender = universeContainer.ThingsToRender;
+            ushort thingsToRenderAmount = universeContainer.ThingsToRenderAmount;
+            
+            for (ushort i = 0; i < thingsToRenderAmount; i++)
+            {
+                ThingPosition thingPosition = thingsPositions[thingsToRender[i]];
+                
+                float distance = (worldPos - new Vector2(thingPosition.x, thingPosition.y)).sqrMagnitude;
+                
+                if (distance < (thingPosition.radius + clickTolerance) * (thingPosition.radius + clickTolerance) && 
+                    distance < closestThingDistance)
+                {
+                    closestThingIndex = thingsToRender[i];
+                    closestThingDistance = distance;
+                }
+            }
+            
+            if (closestThingIndex != ushort.MaxValue)
+            {
+                PlanetView targetPlanetView = GetPlanetView(closestThingIndex);
+                
+                avatarView.TilemapObject.SwitchToTilemapCircle(
+                    targetPlanetView.TilemapCircle,
+                    targetPlanetView.TilemapCircle.GetPositionFromTileCoordinate(0, targetPlanetView.TilemapCircle.Height)
+                );
+            }
+        }
     }
     
     public void SetVisible(bool visible)
@@ -57,17 +177,17 @@ public class UniverseView : MonoBehaviour
         rend.enabled = visible;
     }
     
-    public bool GetVisible()
+    public bool IsVisible()
     {
         return rend.enabled;
     }
 
-    private void UpdateMesh()
+    private void UpdateMesh(bool firstTime)
     {
-        Thing[] things = universeContainer.things;
-        ThingPosition[] thingsPositions = universeContainer.thingsPositions;
-        ushort[] thingsToRender = universeContainer.thingsToRender;
-        ushort thingsToRenderAmount = universeContainer.thingsToRenderAmount;
+        Thing[] things = universeContainer.Things;
+        ThingPosition[] thingsPositions = universeContainer.ThingsPositions;
+        ushort[] thingsToRender = universeContainer.ThingsToRender;
+        ushort thingsToRenderAmount = universeContainer.ThingsToRenderAmount;
 
         int vertexCount = thingsToRenderAmount * 4;
         int triangleCount = thingsToRenderAmount * 6;
@@ -125,7 +245,14 @@ public class UniverseView : MonoBehaviour
         }
 
         vertexOffset = 0;
-
+  
+        ushort avatarPlanet;
+        
+        if (!IsVisible())
+            avatarPlanet = (avatarView.TilemapObject.tilemapCircle as Planet).ThingIndex;
+        else
+            avatarPlanet = ushort.MaxValue;
+        
         for (int i = 0; i < thingsToRenderAmount; i++)
         {
             ushort thingIndex = thingsToRender[i];
@@ -174,69 +301,12 @@ public class UniverseView : MonoBehaviour
 
             GetComponent<MeshFilter>().sharedMesh = mesh;
         }
-
-        firstTime = false;
     }
-
-    /*
-    public void OnDrawGizmosSelected()
+    
+    public void AddTilemapObjectView(TilemapObjectView tilemapObjectView)
     {
-        OnDrawGizmos();
+        tilemapObjectViews.Add(tilemapObjectView);
     }
-
-    public void OnDrawGizmos()
-    {
-        if (thingsContainer != null)
-        {
-            int amount = thingsContainer.thingsAmount;
-
-            Thing[] things = thingsContainer.things;
-            ThingPosition[] positions = thingsContainer.thingsPositions;
-
-            for (int i = 0; i < amount; i++)
-            {
-                Color color;
-
-                switch ((ThingType) things[i].type)
-                {
-                    case ThingType.Galaxy:
-                        //color = Color.blue;
-                        continue;
-                        //break;
-
-                    case ThingType.SolarSystem:
-                        //color = Color.cyan;
-                        continue;
-                        //break;
-
-                    case ThingType.Sun:
-                        color = Color.yellow;
-                        break;
-
-                    case ThingType.Moon:
-                        color = Color.gray;
-                        break;
-
-                    case ThingType.Planet:
-                        color = Color.green;
-                        break;
-
-                    default:
-                        color = Color.gray;
-                        break;
-                }
-
-                Gizmos.color = color;
-
-                //if (things[i].safeRadius > 0)
-                //    Gizmos.DrawWireSphere(new Vector3(positions[i].x, positions[i].y, 0.0f), things[i].safeRadius); 
-
-                if (things[i].radius > 0)
-                    Gizmos.DrawSphere(new Vector3(positions[i].x, positions[i].y, 0.0f), things[i].radius); 
-            }
-        }
-    }
-    */
 }
 
 

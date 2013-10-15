@@ -1,10 +1,11 @@
 using UnityEngine;
 using Universe;
 
-public class TilemapObjectView : MonoBehaviour 
+public class TilemapObjectView : MonoBehaviour, ITilemapObjectListener
 {
     protected TilemapCircleView tilemapCircleView;
     protected TilemapObject tilemapObject;
+    protected UniverseView universeView;
     
     [HideInInspector]
     public Transform trans;
@@ -19,11 +20,14 @@ public class TilemapObjectView : MonoBehaviour
         trans = transform;
     }
     
-    public void Init(TilemapObject tilemapObject, TilemapCircleView tilemapCircleView)
+    public void Init(TilemapObject tilemapObject, UniverseView universeView)
     {
-        this.tilemapCircleView = tilemapCircleView;
+        this.universeView = universeView;
         this.tilemapObject = tilemapObject;
         
+        tilemapObject.Listener = this;
+        
+        tilemapCircleView = universeView.GetPlanetView(((Planet) tilemapObject.tilemapCircle).ThingIndex);
         UpdatePosition();
     }
 
@@ -53,6 +57,12 @@ public class TilemapObjectView : MonoBehaviour
             Gizmos.color = Color.blue;
             Gizmos.DrawLine(transform.position + transform.up * tilemapObject.Size.y * 0.5f, transform.position + transform.up * tilemapObject.Size.y * 0.5f + transform.right * tilemapObject.Size.x * 0.5f);
         }
+    }
+
+    public void OnTilemapCircleChanged ()
+    {
+        tilemapCircleView = universeView.GetPlanetView(((Planet) tilemapObject.tilemapCircle).ThingIndex);
+        UpdatePosition();
     }
 }
 

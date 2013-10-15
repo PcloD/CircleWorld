@@ -13,7 +13,6 @@ namespace Universe
         protected float scale;
         protected float rotation; //radians
         
-        protected float gravity = 10.0f;
         protected Vector2 size = new Vector2(1, 1);
         protected Vector2 velocity;
     
@@ -21,6 +20,8 @@ namespace Universe
         
         protected float distanceInTilemapCircle;
         protected float angleInTilemapCirclePosition;
+        
+        private ITilemapObjectListener listener;
         
         public Vector2 Position
         {
@@ -53,9 +54,21 @@ namespace Universe
             get { return hitFlags; }
         }
         
+        public ITilemapObjectListener Listener
+        {
+            get { return listener; }
+            set { this.listener = value; }
+        }
+        
         public void Init(Vector2 size, TilemapCircle tilemapCircle, Vector2 position)
         {
             this.size = size;
+            
+            SwitchToTilemapCircle(tilemapCircle, position);
+        }
+        
+        public void SwitchToTilemapCircle(TilemapCircle tilemapCircle, Vector2 position)
+        {
             this.tilemapCircle = tilemapCircle;
             this.position = position;
             this.scale = tilemapCircle.GetScaleFromPosition(position);
@@ -63,6 +76,9 @@ namespace Universe
             
             distanceInTilemapCircle = tilemapCircle.GetDistanceFromPosition(position);
             angleInTilemapCirclePosition = tilemapCircle.GetAngleFromPosition(position);
+            
+            if (listener != null)
+                listener.OnTilemapCircleChanged();
         }
         
         public void UpdatePosition(float deltaTime)
@@ -77,8 +93,8 @@ namespace Universe
             Vector2 normal = tilemapCircle.GetNormalFromPosition(position); //doesn't change with vertical position
             Vector2 tangent = tilemapCircle.GetTangentFromPosition(position); //doesn't change with vertical position
     
-            if (useGravity)
-                velocity.y -= gravity * deltaTime;
+            if (tilemapCircle is Planet && useGravity)
+                velocity.y -= ((Planet) tilemapCircle).Gravity * deltaTime;
     
             Vector2 delta = velocity * deltaTime * scale;
     

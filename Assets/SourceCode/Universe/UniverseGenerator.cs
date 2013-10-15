@@ -15,7 +15,6 @@ namespace Universe
             random = new Random(seed);
 
             things[0].type = (ushort)ThingType.Galaxy;
-            things[0].orbitalPeriod = 1;
             things[0].safeRadius = ushort.MaxValue;
 
             currentThing = 0;

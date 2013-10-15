@@ -13,10 +13,18 @@ public class AvatarView : TilemapObjectView
         
         Camera.main.GetComponent<UniverseViewCamera>().UpdatePosition();
         
-        UpdateMovementFromInput();
-        
-        if (inputHorizontal == 0 && inputJump == false)
-            UpdateTilesModification();
+        if (!universeView.IsVisible())
+        {
+            UpdateMovementFromInput();
+            
+            if (inputHorizontal == 0 && inputJump == false)
+                UpdateTilesModification();
+        }
+        else
+        {
+            Universe.Avatar avatar = (Universe.Avatar) tilemapObject;
+            avatar.Walk(0);
+        }
     }
     
     private void UpdateTilesModification()

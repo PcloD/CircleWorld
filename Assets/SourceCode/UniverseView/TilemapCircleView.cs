@@ -114,6 +114,9 @@ public class TilemapCircleView : MonoBehaviour, ITilemapCircleListener
 
                 if (toX >= tilemapCircle.Width)
                     toX = tilemapCircle.Width;
+                
+                if (fromX > toX)
+                    fromX = toX;
             }
         }
 
@@ -169,5 +172,12 @@ public class TilemapCircleView : MonoBehaviour, ITilemapCircleListener
     {
         trans.localPosition = tilemapCircle.Position;
         trans.localRotation = Quaternion.AngleAxis(-tilemapCircle.Rotation, Vector3.forward);
+    }
+    
+    public virtual void Recycle()
+    {
+        tilemapCircle = null;
+        
+        gameObject.SetActive(false);
     }
 }

@@ -44,10 +44,10 @@ public class TilemapCircleViewRenderer : MonoBehaviour
 
         if (mesh == null) 
             mesh = new Mesh();
-
+  
         int vertexCount = (toX - fromX) * tilemapCircle.Height * 4;
         int triangleCount = (toX - fromX) * tilemapCircle.Height * 6;
-
+  
         if (vertices == null || vertices.Length != vertexCount)
             vertices = new Vector3[vertexCount];
 

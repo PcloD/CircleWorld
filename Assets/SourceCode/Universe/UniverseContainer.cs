@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using UnityEngine;
 
 namespace Universe
 {
@@ -6,24 +8,68 @@ namespace Universe
     {
         public const int MAX_THINGS = 32767;
 
-        public Thing[] things = new Thing[MAX_THINGS];
-        public ThingPosition[] thingsPositions = new ThingPosition[MAX_THINGS];
-        public ushort thingsAmount;
+        private Thing[] things = new Thing[MAX_THINGS];
+        private ThingPosition[] thingsPositions = new ThingPosition[MAX_THINGS];
+        private ushort thingsAmount;
 
-        public ushort[] thingsToRender = new ushort[MAX_THINGS];
-        public ushort thingsToRenderAmount;
+        private ushort[] thingsToRender = new ushort[MAX_THINGS];
+        private ushort thingsToRenderAmount;
         
-        public ushort startingPlanet;
-
-        public void Create(int seed)
+        private ushort startingPlanet;
+        
+        private List<Planet> planets = new List<Planet>();
+        
+        private List<TilemapObject> tilemapObjects = new List<TilemapObject>();
+        
+        private UniverseFactory universeFactory = new UniverseFactory();
+        
+        private float time;
+        
+        private Avatar avatar;
+        
+        public ushort StartingPlanet
         {
+            get { return startingPlanet; }
+        }
+        
+        public Avatar Avatar
+        {
+            get { return avatar; }
+        }
+        
+        public Thing[] Things
+        {
+            get { return things; }
+        }
+
+        public ThingPosition[] ThingsPositions
+        {
+            get { return thingsPositions; }
+        }
+        
+        public ushort[] ThingsToRender
+        {
+            get { return thingsToRender; }
+        }
+        
+        public ushort ThingsToRenderAmount
+        {
+            get { return thingsToRenderAmount; }
+        }
+        
+        public void Init(int seed)
+        {
+            time = 0.0f;
+            
             thingsAmount = new UniverseGeneratorDefault().Generate(seed, things);
 
             UpdateThingsToRender();
             
-            startingPlanet = thingsToRender[200];
+            startingPlanet = thingsToRender[0];
             
-            UpdatePositions(0);
+            UpdateUniverse(0);
+            
+            AddAvatar();
         }
 
         private void UpdateThingsToRender()
@@ -38,9 +84,17 @@ namespace Universe
             }
         }
 
-        public void UpdatePositions(float time)
+        public void UpdateUniverse(float deltaTime)
         {
+            time += deltaTime;
+            
             UpdatePositions(0, 0, 0, time);
+            
+            for (int i = 0; i < planets.Count; i++)
+                planets[i].UpdatePlanetPosition();
+            
+            for (int i = 0; i < tilemapObjects.Count; i++)
+                tilemapObjects[i].UpdatePosition(deltaTime);
         }
 
         private int UpdatePositions(int index, float x, float y, float time)
@@ -50,10 +104,22 @@ namespace Universe
             float angle = things[index].angle * 0.000174532925f; //(degrees to radians / 100)
             float distance = things[index].distance;
 
-            float normalizedOrbitalPeriod = time / things[index].orbitalPeriod;
+            float normalizedOrbitalPeriod;
+            
+            if (things[index].orbitalPeriod != 0)
+                normalizedOrbitalPeriod = time / things[index].orbitalPeriod;
+            else
+                normalizedOrbitalPeriod = 0;
+            
             normalizedOrbitalPeriod = normalizedOrbitalPeriod - (int)normalizedOrbitalPeriod;
 
-            float normalizedRotationPeriod = time / things[index].rotationPeriod;
+            float normalizedRotationPeriod;
+            
+            if (things[index].rotationPeriod != 0)
+                normalizedRotationPeriod = time / things[index].rotationPeriod;
+            else
+                normalizedRotationPeriod = 0;
+            
             normalizedRotationPeriod = normalizedRotationPeriod - (int)normalizedRotationPeriod;
 
             angle += 6.28318531f * normalizedOrbitalPeriod; //360 degrees to radians
@@ -74,6 +140,56 @@ namespace Universe
                 index = UpdatePositions(index, x, y, time);
 
             return index;
+        }
+        
+        public Thing GetThing(ushort thingIndex)
+        {
+            return things[thingIndex];
+        }
+        
+        public ThingPosition GetThingPosition(ushort thingIndex)
+        {
+            return thingsPositions[thingIndex];
+        }
+        
+        public Planet GetPlanet(ushort thingIndex)
+        {
+            for (int i = 0; i < planets.Count; i++)
+                if (planets[i].ThingIndex == thingIndex)
+                    return planets[i];
+            
+            Planet planet = universeFactory.GetPlanet(Planet.GetPlanetHeightWithRadius(things[thingIndex].radius));
+            
+            planet.InitPlanet(this, thingIndex);
+            
+            planets.Add(planet);
+            
+            return planet;
+        }
+        
+        public void ReturnPlanet(Planet planet)
+        {
+            if (planets.Remove(planet))
+                universeFactory.ReturnPlanet(planet);
+        }
+        
+        private void AddAvatar()
+        {
+            Planet planet = GetPlanet(startingPlanet);
+            
+            avatar = universeFactory.GetAvatar();
+            avatar.Init(
+                new Vector2(0.75f, 1.5f),
+                planet,
+                planet.GetPositionFromTileCoordinate(0, planet.Height)
+            );
+            
+            AddTilemapObject(avatar);
+        }
+        
+        public void AddTilemapObject(TilemapObject tilemapObject)
+        {
+            tilemapObjects.Add(tilemapObject);
         }
     }
 }
