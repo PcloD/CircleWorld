@@ -10,7 +10,6 @@ public class Performance : MonoBehaviour
 
     public void Awake()
     {
-        Application.targetFrameRate = 60;
     }
 	
 	// Update is called once per frame

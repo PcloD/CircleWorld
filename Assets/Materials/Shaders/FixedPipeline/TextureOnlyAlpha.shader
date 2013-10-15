@@ -1,4 +1,4 @@
-Shader "Universe/Texture Only Alpha" 
+Shader "Universe/FixedPipeline/Texture Only Alpha" 
 {
     Properties {
         _MainTex ("Base (RGB)", 2D) = "white" {}

@@ -1,4 +1,4 @@
-Shader "Universe/Vertex Color Alpha" 
+Shader "Universe/FixedPipeline/Vertex Color Alpha" 
 {
 	Properties {
 	    //_Color ("Main Color", Color) = (1,1,1,1)
@@ -34,6 +34,4 @@ Shader "Universe/Vertex Color Alpha"
 	        //} 
 	    }
 	}
-
-	Fallback " VertexLit", 1
 }

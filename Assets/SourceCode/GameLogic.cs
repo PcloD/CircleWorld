@@ -20,7 +20,12 @@ public class GameLogic : MonoBehaviour
     private TilemapCircle planet;
     private TilemapCircleView planetView;
     
-	void Start () 
+    public void Awake()
+    {
+        Application.targetFrameRate = 60;
+    }
+    
+	public void Start () 
     {
         universeView.Init(universeSeed);
         
