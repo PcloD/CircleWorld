@@ -1,13 +1,13 @@
 using UnityEngine;
 using System.Collections;
-using Universe;
+using UniverseEngine;
 
-public class AvatarView : TilemapObjectView
+public class AvatarView : UniverseObjectView
 {
     private float inputHorizontal;
     private bool inputJump;
     
-    public override void OnTilemapObjectUpdated ()
+    public override void OnUniverseObjectUpdated(float deltaTime)
     {
         UpdatePosition();
         
@@ -22,9 +22,14 @@ public class AvatarView : TilemapObjectView
         }
         else
         {
-            Universe.Avatar avatar = (Universe.Avatar) tilemapObject;
+            UniverseEngine.Avatar avatar = (UniverseEngine.Avatar) universeObject;
             avatar.Walk(0);
         }
+    }
+    
+    public override void OnParentChanged (TilemapCircle parent)
+    {
+        base.OnParentChanged (parent);
     }
     
     private void UpdateTilesModification()
@@ -35,7 +40,7 @@ public class AvatarView : TilemapObjectView
             {
                 int tileX, tileY;
                 if (GetTileCoordinatesUnderTouch(out tileX, out tileY))
-                    tilemapCircleView.TilemapCircle.SetTile(tileX, tileY, 0);
+                    parentView.TilemapCircle.SetTile(tileX, tileY, 0);
             }
         }
         else
@@ -44,20 +49,20 @@ public class AvatarView : TilemapObjectView
             {
                 int tileX, tileY;
                 if (GetTileCoordinatesUnderMouse(out tileX, out tileY))
-                    tilemapCircleView.TilemapCircle.SetTile(tileX, tileY, 0);
+                    parentView.TilemapCircle.SetTile(tileX, tileY, 0);
             }
             else if (Input.GetMouseButton(1))
             {
                 int tileX, tileY;
                 if (GetTileCoordinatesUnderMouse(out tileX, out tileY))
-                    tilemapCircleView.TilemapCircle.SetTile(tileX, tileY, 1);
+                    parentView.TilemapCircle.SetTile(tileX, tileY, 1);
             }
         }
 	}
     
     private void UpdateMovementFromInput()
     {
-        Universe.Avatar avatar = (Universe.Avatar) tilemapObject;
+        UniverseEngine.Avatar avatar = (UniverseEngine.Avatar) universeObject;
         
         if (Application.platform == RuntimePlatform.Android || Application.platform == RuntimePlatform.IPhonePlayer)
         {
@@ -86,7 +91,7 @@ public class AvatarView : TilemapObjectView
 
         Vector3 worldPos = cam.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, 0));
 
-        return tilemapCircleView.TilemapCircle.GetTileCoordinatesFromPosition(worldPos, out tileX, out tileY);
+        return parentView.TilemapCircle.GetTileCoordinatesFromPosition(worldPos, out tileX, out tileY);
     }
     
     private bool GetTileCoordinatesUnderTouch(out int tileX, out int tileY)
@@ -97,7 +102,7 @@ public class AvatarView : TilemapObjectView
         
         Vector3 worldPos = cam.ScreenToWorldPoint(new Vector3(touchPosition.x, touchPosition.y, 0));
 
-        return tilemapCircleView.TilemapCircle.GetTileCoordinatesFromPosition(worldPos, out tileX, out tileY);
+        return parentView.TilemapCircle.GetTileCoordinatesFromPosition(worldPos, out tileX, out tileY);
     }
     
     public void OnGUI()

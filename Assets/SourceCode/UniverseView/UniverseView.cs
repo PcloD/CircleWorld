@@ -1,8 +1,8 @@
 using UnityEngine;
-using Universe;
+using UniverseEngine;
 using System.Collections.Generic;
 
-public class UniverseView : MonoBehaviour
+public class UniverseView : MonoBehaviour, IUniverseListener
 {
     public UniverseViewFactory universeFactory;
     
@@ -10,10 +10,10 @@ public class UniverseView : MonoBehaviour
     [System.NonSerialized]
     public AvatarView avatarView;
 
-    private UniverseContainer universeContainer = new UniverseContainer();
+    private Universe universe = new Universe();
     
     private List<PlanetView> planetViews = new List<PlanetView>(32);
-    private List<TilemapObjectView> tilemapObjectViews = new List<TilemapObjectView>(32);
+    private List<UniverseObjectView> tilemapObjectViews = new List<UniverseObjectView>(32);
 
     private Mesh mesh;
     private Vector3[] vertices;
@@ -23,9 +23,9 @@ public class UniverseView : MonoBehaviour
     private Renderer rend;
     private Transform trans;
     
-    public UniverseContainer UniverseContainer
+    public Universe Universe
     {
-        get { return universeContainer; }
+        get { return universe; }
     }
         
     public void Awake()
@@ -42,16 +42,22 @@ public class UniverseView : MonoBehaviour
     {
         CreateUniverse(seed);
         
-        AddAvatar();
-        
         UpdateMesh(true);
     }
     
     private void CreateUniverse(int seed)
     {
-        universeContainer = new UniverseContainer();
+        universe = new Universe();
         
-        universeContainer.Init(seed);
+        universe.Init(seed, this);
+    }
+    
+    public PlanetView GetPlanetView(TilemapCircle tilemapCircle)
+    {
+        if (tilemapCircle is Planet)
+            return GetPlanetView(((Planet) tilemapCircle).ThingIndex);
+        
+        return null;
     }
     
     public PlanetView GetPlanetView(ushort thingIndex)
@@ -61,14 +67,9 @@ public class UniverseView : MonoBehaviour
                 return planetViews[i];
         
         if (planetViews.Count > 1)
-        {
-            universeContainer.ReturnPlanet(planetViews[0].Planet);
-            universeFactory.ReturnPlanet(planetViews[0]);
-            
-            planetViews.RemoveAt(0);
-        }
+            universe.ReturnPlanet(planetViews[0].Planet);
         
-        Planet planet = universeContainer.GetPlanet(thingIndex);
+        Planet planet = universe.GetPlanet(thingIndex);
         
         PlanetView planetView = universeFactory.GetPlanet(planet.Height);
         
@@ -81,12 +82,32 @@ public class UniverseView : MonoBehaviour
         return planetView;
     }
     
-    private void AddAvatar()
+    public void OnPlanetReturned(Planet planet)
     {
-        avatarView = universeFactory.GetAvatar();
-        avatarView.Init(universeContainer.Avatar, this);
-        
-        AddTilemapObjectView(avatarView);
+        for (int i = 0; i < planetViews.Count; i++)
+        {
+            if (planetViews[i].Planet == planet)
+            {
+                PlanetView planetView = planetViews[i];
+                
+                universeFactory.ReturnPlanet(planetView);
+                
+                planetViews.RemoveAt(i);
+                
+                break;
+            }
+        }
+    }
+    
+    public void OnUniverseObjectAdded(UniverseObject universeObject)
+    {
+        if (universeObject is UniverseEngine.Avatar)
+        {
+            avatarView = universeFactory.GetAvatar();
+            avatarView.Init(universe.Avatar, this);
+            
+            tilemapObjectViews.Add(avatarView);
+        }
     }
  
     /// <summary>
@@ -94,7 +115,7 @@ public class UniverseView : MonoBehaviour
     /// </summary>
     public void UpdateUniverse(float deltaTime)
     {
-        universeContainer.UpdateUniverse(deltaTime);
+        universe.UpdateUniverse(deltaTime);
         
         if (IsVisible())
         {
@@ -102,12 +123,6 @@ public class UniverseView : MonoBehaviour
         
             UpdateClickOnPlanetToTravel();
         }
-        
-        for (int i = 0; i < planetViews.Count; i++)
-            planetViews[i].OnTilemapCircleUpdated();
-        
-        for (int i = 0; i < tilemapObjectViews.Count; i++)
-            tilemapObjectViews[i].OnTilemapObjectUpdated();
     }
     
     private void UpdateClickOnPlanetToTravel()
@@ -142,9 +157,9 @@ public class UniverseView : MonoBehaviour
             ushort closestThingIndex = ushort.MaxValue;
             float closestThingDistance = float.MaxValue;
             
-            ThingPosition[] thingsPositions = universeContainer.ThingsPositions;
-            ushort[] thingsToRender = universeContainer.ThingsToRender;
-            ushort thingsToRenderAmount = universeContainer.ThingsToRenderAmount;
+            ThingPosition[] thingsPositions = universe.ThingsPositions;
+            ushort[] thingsToRender = universe.ThingsToRender;
+            ushort thingsToRenderAmount = universe.ThingsToRenderAmount;
             
             for (ushort i = 0; i < thingsToRenderAmount; i++)
             {
@@ -164,7 +179,7 @@ public class UniverseView : MonoBehaviour
             {
                 PlanetView targetPlanetView = GetPlanetView(closestThingIndex);
                 
-                avatarView.TilemapObject.SwitchToTilemapCircle(
+                avatarView.UniverseObject.SetParent(
                     targetPlanetView.TilemapCircle,
                     targetPlanetView.TilemapCircle.GetPositionFromTileCoordinate(0, targetPlanetView.TilemapCircle.Height)
                 );
@@ -184,10 +199,10 @@ public class UniverseView : MonoBehaviour
 
     private void UpdateMesh(bool firstTime)
     {
-        Thing[] things = universeContainer.Things;
-        ThingPosition[] thingsPositions = universeContainer.ThingsPositions;
-        ushort[] thingsToRender = universeContainer.ThingsToRender;
-        ushort thingsToRenderAmount = universeContainer.ThingsToRenderAmount;
+        Thing[] things = universe.Things;
+        ThingPosition[] thingsPositions = universe.ThingsPositions;
+        ushort[] thingsToRender = universe.ThingsToRender;
+        ushort thingsToRenderAmount = universe.ThingsToRenderAmount;
 
         int vertexCount = thingsToRenderAmount * 4;
         int triangleCount = thingsToRenderAmount * 6;
@@ -249,7 +264,7 @@ public class UniverseView : MonoBehaviour
         ushort avatarPlanet;
         
         if (!IsVisible())
-            avatarPlanet = (avatarView.TilemapObject.tilemapCircle as Planet).ThingIndex;
+            avatarPlanet = (avatarView.UniverseObject.parent as Planet).ThingIndex;
         else
             avatarPlanet = ushort.MaxValue;
         
@@ -301,11 +316,6 @@ public class UniverseView : MonoBehaviour
 
             GetComponent<MeshFilter>().sharedMesh = mesh;
         }
-    }
-    
-    public void AddTilemapObjectView(TilemapObjectView tilemapObjectView)
-    {
-        tilemapObjectViews.Add(tilemapObjectView);
     }
 }
 

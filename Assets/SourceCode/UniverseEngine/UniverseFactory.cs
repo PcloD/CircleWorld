@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Universe
+namespace UniverseEngine
 {
     public class UniverseFactory
     {

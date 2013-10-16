@@ -1,8 +1,8 @@
 using System;
 
-namespace Universe
+namespace UniverseEngine
 {
-    public class Avatar : TilemapObject
+    public class Avatar : UniverseObject
     {
         public float jumpSpeed = 7.0f;
         public float walkSpeed = 3.0f;

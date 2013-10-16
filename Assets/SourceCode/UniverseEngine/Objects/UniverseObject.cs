@@ -1,11 +1,11 @@
 using UnityEngine;
 using System.Collections;
 
-namespace Universe
+namespace UniverseEngine
 {
-    public class TilemapObject
+    public class UniverseObject
     {
-        public TilemapCircle tilemapCircle;
+        public TilemapCircle parent;
     
         protected bool useGravity = true;
      
@@ -21,7 +21,7 @@ namespace Universe
         protected float distanceInTilemapCircle;
         protected float angleInTilemapCirclePosition;
         
-        private ITilemapObjectListener listener;
+        private IUniverseObjectListener listener;
         
         public Vector2 Position
         {
@@ -54,47 +54,55 @@ namespace Universe
             get { return hitFlags; }
         }
         
-        public ITilemapObjectListener Listener
+        public IUniverseObjectListener Listener
         {
             get { return listener; }
             set { this.listener = value; }
         }
         
-        public void Init(Vector2 size, TilemapCircle tilemapCircle, Vector2 position)
+        public void Init(Vector2 size, TilemapCircle parent, Vector2 position)
         {
             this.size = size;
             
-            SwitchToTilemapCircle(tilemapCircle, position);
+            SetParent(parent, position);
         }
         
-        public void SwitchToTilemapCircle(TilemapCircle tilemapCircle, Vector2 position)
+        public void SetParent(TilemapCircle parent, Vector2 position)
         {
-            this.tilemapCircle = tilemapCircle;
+            this.parent = parent;
             this.position = position;
-            this.scale = tilemapCircle.GetScaleFromPosition(position);
-            this.rotation = tilemapCircle.GetAngleFromPosition(position);
+            this.scale = parent.GetScaleFromPosition(position);
+            this.rotation = parent.GetAngleFromPosition(position);
             
-            distanceInTilemapCircle = tilemapCircle.GetDistanceFromPosition(position);
-            angleInTilemapCirclePosition = tilemapCircle.GetAngleFromPosition(position);
+            distanceInTilemapCircle = parent.GetDistanceFromPosition(position);
+            angleInTilemapCirclePosition = parent.GetAngleFromPosition(position);
             
             if (listener != null)
-                listener.OnTilemapCircleChanged();
+                listener.OnParentChanged(parent);
         }
         
-        public void UpdatePosition(float deltaTime)
+        public void Update(float deltaTime)
         {
-            if (tilemapCircle != null)
+            UpdatePosition(deltaTime);
+            
+            if (listener != null)
+                listener.OnUniverseObjectUpdated(deltaTime);
+        }
+        
+        protected void UpdatePosition(float deltaTime)
+        {
+            if (parent != null)
             {
-                position = tilemapCircle.GetPositionFromDistanceAndAngle(distanceInTilemapCircle, angleInTilemapCirclePosition);
-                rotation = tilemapCircle.GetAngleFromPosition(position);
+                position = parent.GetPositionFromDistanceAndAngle(distanceInTilemapCircle, angleInTilemapCirclePosition);
+                rotation = parent.GetAngleFromPosition(position);
             }
             
-            scale = tilemapCircle.GetScaleFromPosition(position);
-            Vector2 normal = tilemapCircle.GetNormalFromPosition(position); //doesn't change with vertical position
-            Vector2 tangent = tilemapCircle.GetTangentFromPosition(position); //doesn't change with vertical position
+            scale = parent.GetScaleFromPosition(position);
+            Vector2 normal = parent.GetNormalFromPosition(position); //doesn't change with vertical position
+            Vector2 tangent = parent.GetTangentFromPosition(position); //doesn't change with vertical position
     
-            if (tilemapCircle is Planet && useGravity)
-                velocity.y -= ((Planet) tilemapCircle).Gravity * deltaTime;
+            if (parent is Planet && useGravity)
+                velocity.y -= ((Planet) parent).Gravity * deltaTime;
     
             Vector2 delta = velocity * deltaTime * scale;
     
@@ -105,7 +113,7 @@ namespace Universe
             if (delta.y > 0)
             {
                 //Check against ceiling
-                if (tilemapCircle.RaycastSquare(
+                if (parent.RaycastSquare(
                     position + normal * (size.y * 0.5f * scale), 
                     size.x * scale,
                     TileDirection.Up, 
@@ -120,7 +128,7 @@ namespace Universe
             else if (delta.y < 0)
             {
                 //Check against floor
-                if (tilemapCircle.RaycastSquare(
+                if (parent.RaycastSquare(
                     position + normal * (size.y * 0.5f * scale), 
                     size.x * scale,
                     TileDirection.Down, 
@@ -136,13 +144,13 @@ namespace Universe
             if (delta.y != 0)
             {
                 position += normal * delta.y;
-                scale = tilemapCircle.GetScaleFromPosition(position);
+                scale = parent.GetScaleFromPosition(position);
             }
     
             if (delta.x > 0)
             {
                 //Check against right wall
-                if (tilemapCircle.RaycastSquare(
+                if (parent.RaycastSquare(
                     position + normal * (size.y * 0.5f * scale), 
                     size.y * scale,
                     TileDirection.Right, 
@@ -157,7 +165,7 @@ namespace Universe
             else if (delta.x < 0)
             {
                 //Check against left wall
-                if (tilemapCircle.RaycastSquare(
+                if (parent.RaycastSquare(
                     position + normal * (size.y * 0.5f * scale), 
                     size.y * scale,
                     TileDirection.Left, 
@@ -173,15 +181,15 @@ namespace Universe
             if (delta.x != 0)
             {
                 position += tangent * delta.x;
-                normal = tilemapCircle.GetNormalFromPosition(position);
+                normal = parent.GetNormalFromPosition(position);
             }
     
-            rotation = tilemapCircle.GetAngleFromPosition(position);
+            rotation = parent.GetAngleFromPosition(position);
             
-            if (tilemapCircle != null)
+            if (parent != null)
             {
-                distanceInTilemapCircle = tilemapCircle.GetDistanceFromPosition(position);
-                angleInTilemapCirclePosition = tilemapCircle.GetAngleFromPosition(position);
+                distanceInTilemapCircle = parent.GetDistanceFromPosition(position);
+                angleInTilemapCirclePosition = parent.GetAngleFromPosition(position);
             }
         }
      

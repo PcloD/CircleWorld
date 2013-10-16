@@ -1,6 +1,6 @@
 using System;
 
-namespace Universe
+namespace UniverseEngine
 {
     public class UniverseGenerator
     {
@@ -69,6 +69,10 @@ namespace Universe
             things[thingsAmount].radius = radius;
             things[thingsAmount].safeRadius = safeRadius;
             things[thingsAmount].seed = seed;
+            
+            //TODO: Remove once planet rotations are correctly implemented
+            things[thingsAmount].rotationPeriod = 0;
+            //things[thingsAmount].orbitalPeriod = 0;
 
             currentThing = thingsAmount;
             thingsAmount++;

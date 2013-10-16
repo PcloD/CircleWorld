@@ -22,9 +22,9 @@ public class UniverseViewCamera : MonoBehaviour
     private Vector3 zoomingTouchFinger1FromPosition;
     private Vector3 zoomingTouchFinger2FromPosition;
     
-    private TilemapObjectView followingObject;
+    private UniverseObjectView followingObject;
     
-    public TilemapObjectView FollowingObject 
+    public UniverseObjectView FollowingObject 
     {
         get { return followingObject; }
         set { followingObject = value; }
@@ -57,7 +57,7 @@ public class UniverseViewCamera : MonoBehaviour
         trans.position = newPosition;
         trans.rotation = followingObject.trans.rotation;
         
-        scale = followingObject.TilemapObject.Scale;
+        scale = followingObject.UniverseObject.Scale;
     }
 
     private void UpdateZoom()

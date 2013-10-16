@@ -1,6 +1,6 @@
 using System;
 
-namespace Universe
+namespace UniverseEngine
 {
     public enum ThingType
     {

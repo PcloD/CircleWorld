@@ -1,6 +1,6 @@
 using System;
 
-namespace Universe
+namespace UniverseEngine
 {
     [Flags]
     public enum TileHitFlags

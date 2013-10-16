@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Universe
+namespace UniverseEngine
 {
-    public class UniverseContainer
+    public class Universe
     {
         public const int MAX_THINGS = 32767;
 
@@ -19,13 +19,15 @@ namespace Universe
         
         private List<Planet> planets = new List<Planet>();
         
-        private List<TilemapObject> tilemapObjects = new List<TilemapObject>();
+        private List<UniverseObject> tilemapObjects = new List<UniverseObject>();
         
         private UniverseFactory universeFactory = new UniverseFactory();
         
         private float time;
         
         private Avatar avatar;
+        
+        private IUniverseListener listener;
         
         public ushort StartingPlanet
         {
@@ -57,15 +59,23 @@ namespace Universe
             get { return thingsToRenderAmount; }
         }
         
-        public void Init(int seed)
+        public IUniverseListener Listener
         {
+            get { return listener; }
+            set { listener = value; }
+        }
+        
+        public void Init(int seed, IUniverseListener listener)
+        {
+            this.listener = listener;
+            
             time = 0.0f;
             
             thingsAmount = new UniverseGeneratorDefault().Generate(seed, things);
 
             UpdateThingsToRender();
             
-            startingPlanet = thingsToRender[0];
+            startingPlanet = thingsToRender[1];
             
             UpdateUniverse(0);
             
@@ -91,10 +101,10 @@ namespace Universe
             UpdatePositions(0, 0, 0, time);
             
             for (int i = 0; i < planets.Count; i++)
-                planets[i].UpdatePlanetPosition();
+                planets[i].Update(deltaTime);
             
             for (int i = 0; i < tilemapObjects.Count; i++)
-                tilemapObjects[i].UpdatePosition(deltaTime);
+                tilemapObjects[i].Update(deltaTime);
         }
 
         private int UpdatePositions(int index, float x, float y, float time)
@@ -170,7 +180,12 @@ namespace Universe
         public void ReturnPlanet(Planet planet)
         {
             if (planets.Remove(planet))
+            {
+                if (listener != null)
+                    listener.OnPlanetReturned(planet);
+                
                 universeFactory.ReturnPlanet(planet);
+            }
         }
         
         private void AddAvatar()
@@ -184,12 +199,15 @@ namespace Universe
                 planet.GetPositionFromTileCoordinate(0, planet.Height)
             );
             
-            AddTilemapObject(avatar);
+            AddUniverseObject(avatar);
         }
         
-        public void AddTilemapObject(TilemapObject tilemapObject)
+        public void AddUniverseObject(UniverseObject universeObject)
         {
-            tilemapObjects.Add(tilemapObject);
+            tilemapObjects.Add(universeObject);
+            
+            if (listener != null)
+                listener.OnUniverseObjectAdded(universeObject);
         }
     }
 }

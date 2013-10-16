@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-namespace Universe
+namespace UniverseEngine
 {
     public class TilemapCircle
     {
@@ -22,7 +22,7 @@ namespace Universe
         private float k;
         private float logk;
         
-        private ITilemapCircleListener listener;
+        protected ITilemapCircleListener listener;
         
         protected Vector2 position;
         protected float rotation;
@@ -138,7 +138,7 @@ namespace Universe
             {
                 tiles[tileX + tileY * width] = tile;
                 if (listener != null)
-                    listener.OnTileChange(tileX, tileY);
+                    listener.OnTilemapTileChanged(tileX, tileY);
             }
         }
     

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Universe
+namespace UniverseEngine
 {
     public struct TileHitInfo
     {

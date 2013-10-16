@@ -1,5 +1,5 @@
 using UnityEngine;
-using Universe;
+using UniverseEngine;
 using System.Collections.Generic;
 
 public class TilemapCircleView : MonoBehaviour, ITilemapCircleListener
@@ -156,12 +156,12 @@ public class TilemapCircleView : MonoBehaviour, ITilemapCircleListener
         }
     }
 
-    public void OnTileChange (int tileX, int tileY)
+    public void OnTilemapTileChanged (int tileX, int tileY)
     {
         GetRenderer(tileX, tileY).SetDirty();
     }
     
-    public void OnTilemapCircleUpdated()
+    public void OnTilemapParentChanged(float deltaTime)
     {
         UpdatePosition();
         
@@ -171,7 +171,7 @@ public class TilemapCircleView : MonoBehaviour, ITilemapCircleListener
     private void UpdatePosition()
     {
         trans.localPosition = tilemapCircle.Position;
-        trans.localRotation = Quaternion.AngleAxis(-tilemapCircle.Rotation, Vector3.forward);
+        trans.localRotation = Quaternion.AngleAxis(-tilemapCircle.Rotation * Mathf.Rad2Deg, Vector3.forward);
     }
     
     public virtual void Recycle()

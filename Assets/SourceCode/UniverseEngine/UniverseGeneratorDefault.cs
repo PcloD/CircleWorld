@@ -1,6 +1,6 @@
 using System;
 
-namespace Universe
+namespace UniverseEngine
 {
     public class UniverseGeneratorDefault : UniverseGenerator
     {

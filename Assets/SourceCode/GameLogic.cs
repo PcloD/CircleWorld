@@ -1,6 +1,6 @@
 using UnityEngine;
 using System.Collections;
-using Universe;
+using UniverseEngine;
 
 public class GameLogic : MonoBehaviour 
 {

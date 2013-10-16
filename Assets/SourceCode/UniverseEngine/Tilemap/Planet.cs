@@ -1,13 +1,13 @@
 using System;
 using UnityEngine;
 
-namespace Universe
+namespace UniverseEngine
 {
     public class Planet : TilemapCircle
     {
         private float gravity = 10.0f;
         
-        private UniverseContainer universeContainer;
+        private Universe universe;
         private ushort thingIndex;
         
         public ushort ThingIndex
@@ -34,12 +34,12 @@ namespace Universe
             }        
         }
         
-        public void InitPlanet(UniverseContainer universeContainer, ushort thingIndex)
+        public void InitPlanet(Universe universe, ushort thingIndex)
         {
-            this.universeContainer = universeContainer;
+            this.universe = universe;
             this.thingIndex = thingIndex;
             
-            Thing thing = universeContainer.GetThing(thingIndex);
+            Thing thing = universe.GetThing(thingIndex);
             
             Init(thing.seed, GetPlanetHeightWithRadius(thing.radius));
             
@@ -50,13 +50,21 @@ namespace Universe
         {
             base.Recycle ();
             
-            universeContainer = null;
+            universe = null;
             thingIndex = 0;
         }
         
-        public void UpdatePlanetPosition()
+        public void Update(float deltaTime)
         {
-            ThingPosition thing = universeContainer.GetThingPosition(thingIndex);
+            UpdatePlanetPosition();
+            
+            if (listener != null)
+                listener.OnTilemapParentChanged(deltaTime);
+        }
+        
+        private void UpdatePlanetPosition()
+        {
+            ThingPosition thing = universe.GetThingPosition(thingIndex);
             
             position.x = thing.x;
             position.y = thing.y;

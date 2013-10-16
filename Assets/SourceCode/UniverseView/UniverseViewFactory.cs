@@ -1,6 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
-using Universe;
+using UniverseEngine;
 
 public class UniverseViewFactory : MonoBehaviour
 {
