@@ -57,7 +57,7 @@ public class SpriteView : MonoBehaviour
         if (!GetComponent<MeshFilter>())
             gameObject.AddComponent<MeshFilter>();
         
-        renderer.sharedMaterial = sprite.SpriteSheet.Material;
+        renderer.sharedMaterial = sprite.SpriteSheet.DefaultMaterial;
         renderer.enabled = true;
         
         //float halfWidth = sprite.SizeX * 0.5f;

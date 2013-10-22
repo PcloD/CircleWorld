@@ -23,14 +23,18 @@ namespace UniverseEngine
         
         protected override void UpdateTiles ()
         {
-            System.Random random = new System.Random(Seed);
+            //System.Random random = new System.Random(Seed);
+            
+            PlanetType planetType = PlanetTypes.GetPlanetType((byte) (Math.Abs(Seed % 4)));
+            
+            byte tileId = planetType.mainTileId;
             
             for (int i = 0; i < tiles.Length; i++)
             {
-                //if (Random.value > 0.85f)
+                //if (random.NextDouble() > 0.95f)
                 //    tiles[i] = 0;
                 //else
-                    tiles[i] = (byte)random.Next(1, 256);
+                    tiles[i] = tileId;
             }        
         }
         

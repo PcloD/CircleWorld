@@ -49,12 +49,12 @@ public class UniverseObjectView : MonoBehaviour, IUniverseObjectListener
         trans.localRotation = Quaternion.AngleAxis(-universeObject.Rotation * Mathf.Rad2Deg, Vector3.forward);
     }
 
-    public void OnDrawGizmosSelected()
+    public virtual void OnDrawGizmosSelected()
     {
         OnDrawGizmos();
     }
 
-    public void OnDrawGizmos()
+    public virtual void OnDrawGizmos()
     {
         if (universeObject != null)
         {

@@ -7,9 +7,9 @@
  SubShader {
      Tags {"Queue"="Transparent" "IgnoreProjector"="True" "RenderType"="Transparent"}
         Blend SrcAlpha OneMinusSrcAlpha
-        Lighting Off
-     ZWrite Off
-     ZTest Off
+    Lighting Off
+    ZWrite Off
+    ZTest Off
      
      Pass {
          ColorMaterial AmbientAndDiffuse

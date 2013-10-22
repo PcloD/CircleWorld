@@ -8,7 +8,7 @@ namespace SpriteMeshEngine
         private string id;
         private Sprite[] sprites;
         private Texture2D texture;
-        private Material material;
+        private Material defaultMaterial;
         
         public string Id
         {
@@ -26,14 +26,14 @@ namespace SpriteMeshEngine
             }
         }
         
-        public Material Material
+        public Material DefaultMaterial
         {
             get
             {
-                if (material == null)
-                    material = CreateMaterial();
+                if (defaultMaterial == null)
+                    defaultMaterial = CreateDefaultMaterial();
                 
-                return material;
+                return defaultMaterial;
             }
         }
         
@@ -67,7 +67,7 @@ namespace SpriteMeshEngine
             return (Texture2D) Resources.Load(SpriteSheetManager.SPRITE_SHEET_TEXTURE_FOLDER + id, typeof(Texture2D));
         }
         
-        private Material CreateMaterial()
+        private Material CreateDefaultMaterial()
         {
             Material material = new Material(Shader.Find("SpriteMeshEngine/DefaultShader"));
             
@@ -84,10 +84,10 @@ namespace SpriteMeshEngine
                 texture = null;
             }
             
-            if (material)
+            if (defaultMaterial)
             {
-                Object.Destroy(material);
-                material = null;
+                Object.Destroy(defaultMaterial);
+                defaultMaterial = null;
             }
         }
     }

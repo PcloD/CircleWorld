@@ -14,7 +14,6 @@ public class TilemapCircleViewRenderer : MonoBehaviour
     private TilemapCircle tilemapCircle;
     private Vector2[] circleNormals;
     private float[] circleHeights;
-    private Color32[] colorsPerTile;
 
     private Vector3[] vertices;
     private Color32[] colors;
@@ -22,9 +21,14 @@ public class TilemapCircleViewRenderer : MonoBehaviour
     private Vector2[] uvs;
 
     private bool firstTime;
+    
+    static private TileType[] tileTypes;
 
-    public void Init(TilemapCircleView tilemapCircleView, int fromX, int toX, Color32[] colorsPerTile)
+    public void Init(TilemapCircleView tilemapCircleView, int fromX, int toX)
     {
+        if (tileTypes == null)
+            tileTypes = TileTypes.GetTileTypes();
+        
         dirty = true;
         firstTime = true;
 
@@ -34,7 +38,6 @@ public class TilemapCircleViewRenderer : MonoBehaviour
         this.toX = toX;
         this.circleNormals = tilemapCircle.CircleNormals;
         this.circleHeights = tilemapCircle.CircleHeights;
-        this.colorsPerTile = colorsPerTile;
 
         if (!GetComponent<MeshRenderer>())
             gameObject.AddComponent<MeshRenderer>();
@@ -77,10 +80,12 @@ public class TilemapCircleViewRenderer : MonoBehaviour
         int triangleOffset = 0;
 
         Vector3 p1, p2, p3, p4;
-
+  
+        /*
         float tx = 1.0f / 16.0f;
         float ty = 1.0f / 16.0f;
         float tt = 1.0f / 256.0f;
+        */
         
         int height = tilemapCircleView.TilemapCircle.Height;
         int width = tilemapCircleView.TilemapCircle.Width;
@@ -92,9 +97,9 @@ public class TilemapCircleViewRenderer : MonoBehaviour
 
             for (int x = fromX; x < toX; x++)
             {
-                byte tile = tilemapCircle.GetTile(x, y);
+                byte tileId = tilemapCircle.GetTile(x, y);
 
-                if (tile == 0) //skip empty tiles
+                if (tileId == 0) //skip empty tiles
                 {
                     p1 = p2 = p3 = p4 = Vector3.zero;
                 }
@@ -105,13 +110,13 @@ public class TilemapCircleViewRenderer : MonoBehaviour
                     p3 = circleNormals[(x + 1) % width] * downRadius;
                     p4 = circleNormals[x] * downRadius;
                 }
+                
+                TileType tileType = tileTypes[tileId];
 
                 vertices[vertexOffset + 0] = p1;
                 vertices[vertexOffset + 1] = p2;
                 vertices[vertexOffset + 2] = p3;
                 vertices[vertexOffset + 3] = p4;
-
-                int textureId = tile % 4;
 
                 if (tilemapCircleView.debugColor)
                 {
@@ -122,18 +127,39 @@ public class TilemapCircleViewRenderer : MonoBehaviour
                 }
                 else
                 {
+                    colors[vertexOffset + 0] = Color.white;
+                    colors[vertexOffset + 1] = Color.white;
+                    colors[vertexOffset + 2] = Color.white;
+                    colors[vertexOffset + 3] = Color.white;
+                    
+                    /*
                     Color32 color = colorsPerTile[tile];
 
                     colors[vertexOffset + 0] = color;
                     colors[vertexOffset + 1] = color;
                     colors[vertexOffset + 2] = color;
                     colors[vertexOffset + 3] = color;
+                    */
                 }
+                
+                TileSubtype subtype;
+                
+                if (y == height - 1 || tilemapCircle.GetTile(x, y + 1) == 0)
+                    subtype = tileType.top;
+                else
+                    subtype = tileType.center;
 
-                uvs[vertexOffset + 0] = new Vector2(tx * textureId, 1.0f - 0);
-                uvs[vertexOffset + 1] = new Vector2(tx * textureId + tx - tt, 1.0f - 0);
-                uvs[vertexOffset + 2] = new Vector2(tx * textureId + tx - tt, 1.0f - (0 + ty) + tt);
-                uvs[vertexOffset + 3] = new Vector2(tx * textureId, 1.0f - (0 + ty) + tt);
+                uvs[vertexOffset + 0].x = subtype.uvFromX;
+                uvs[vertexOffset + 0].y = subtype.uvToY;
+                
+                uvs[vertexOffset + 1].x = subtype.uvToX;
+                uvs[vertexOffset + 1].y = subtype.uvToY;
+                
+                uvs[vertexOffset + 2].x = subtype.uvToX;
+                uvs[vertexOffset + 2].y = subtype.uvFromY;
+                
+                uvs[vertexOffset + 3].x = subtype.uvFromX;
+                uvs[vertexOffset + 3].y = subtype.uvFromY;
 
                 if (firstTime)
                 {
@@ -152,12 +178,12 @@ public class TilemapCircleViewRenderer : MonoBehaviour
         }
 
         mesh.vertices = vertices;
+        mesh.uv = uvs;
 
         if (firstTime)
         {
             mesh.triangles = triangles;
             mesh.colors32 = colors;
-            mesh.uv = uvs;
         }
 
         GetComponent<MeshFilter>().sharedMesh = mesh;

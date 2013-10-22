@@ -23,6 +23,8 @@ public class UniverseView : MonoBehaviour, IUniverseListener
     private Renderer rend;
     private Transform trans;
     
+    private PlanetType[] planetTypes;
+    
     public Universe Universe
     {
         get { return universe; }
@@ -36,6 +38,10 @@ public class UniverseView : MonoBehaviour, IUniverseListener
         trans.localPosition = Vector3.zero;
         trans.localScale = Vector3.one;
         trans.localRotation = Quaternion.identity;
+        
+        renderer.sharedMaterial.mainTexture = SpriteMeshEngine.SpriteSheetManager.GetSpriteSheet("Planets").Texture;
+        
+        planetTypes = PlanetTypes.GetPlanetTypes();
     }
     
     public void Init(int seed)
@@ -226,25 +232,20 @@ public class UniverseView : MonoBehaviour, IUniverseListener
 
         if (firstTime)
         {
-            float tx = 1.0f / 4.0f;
-            float ty = 1.0f / 4.0f;
-            float tt = 1.0f / 256.0f;
-
             int triangleOffset = 0;
 
             for (ushort i = 0; i < thingsToRenderAmount; i++)
             {
                 Thing thing = things[thingsToRender[i]];
-
-                int textureId = (int) (((uint) thing.seed) % 16);
-
-                float uvx = (textureId % 4) / 4.0f;
-                float uvy = (textureId / 4) / 4.0f;
-
-                uvs[vertexOffset + 0] = new Vector2(uvx, 1.0f - uvy);
-                uvs[vertexOffset + 1] = new Vector2(uvx + tx - tt, 1.0f - uvy);
-                uvs[vertexOffset + 2] = new Vector2(uvx + tx - tt, 1.0f - (uvy + ty) + tt);
-                uvs[vertexOffset + 3] = new Vector2(uvx, 1.0f - (uvy + ty) + tt);
+                
+                PlanetType planetType = planetTypes[(byte) (Mathf.Abs(thing.seed % 4))];
+    
+                Rect planetUV = planetType.planetSprite.UV;
+                
+                uvs[vertexOffset + 0] = new Vector2(planetUV.xMin, planetUV.yMax);
+                uvs[vertexOffset + 1] = new Vector2(planetUV.xMax, planetUV.yMax);
+                uvs[vertexOffset + 2] = new Vector2(planetUV.xMax, planetUV.yMin);
+                uvs[vertexOffset + 3] = new Vector2(planetUV.xMin, planetUV.yMin);
 
                 triangles[triangleOffset + 0] = vertexOffset + 0;
                 triangles[triangleOffset + 1] = vertexOffset + 1;

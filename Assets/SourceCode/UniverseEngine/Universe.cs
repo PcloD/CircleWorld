@@ -194,7 +194,7 @@ namespace UniverseEngine
             
             avatar = universeFactory.GetAvatar();
             avatar.Init(
-                new Vector2(0.75f, 1.5f),
+                new Vector2(0.75f, 1.05f),
                 planet,
                 planet.GetPositionFromTileCoordinate(0, planet.Height)
             );

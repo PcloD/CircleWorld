@@ -12,8 +12,6 @@ public class TilemapCircleView : MonoBehaviour, ITilemapCircleListener
 
     private TilemapCircleViewRenderer[] renderers;
 
-    private Color32[] colorsPerTile;
-    
     private TilemapCircle tilemapCircle;
     
     private Transform trans;
@@ -25,6 +23,9 @@ public class TilemapCircleView : MonoBehaviour, ITilemapCircleListener
     
     public void Awake()
     {
+        if (!material.mainTexture)
+            material.mainTexture = SpriteMeshEngine.SpriteSheetManager.GetSpriteSheet("Tilemap").Texture;
+        
         trans = transform;
     }
     
@@ -33,8 +34,6 @@ public class TilemapCircleView : MonoBehaviour, ITilemapCircleListener
         this.tilemapCircle = tilemapCircle;
         
         tilemapCircle.Listener = this;
-        
-        UpdateData();
         
         UpdatePosition();
         
@@ -106,8 +105,7 @@ public class TilemapCircleView : MonoBehaviour, ITilemapCircleListener
                 renderers[i].Init(
                     this, 
                     fromX,
-                    toX,
-                    colorsPerTile);
+                    toX);
 
                 fromX += sizeX;
                 toX += sizeX;
@@ -136,24 +134,6 @@ public class TilemapCircleView : MonoBehaviour, ITilemapCircleListener
         }
 
         return null;
-    }
-
-    private void UpdateData()
-    {
-        if (colorsPerTile == null || colorsPerTile.Length != 256)
-        {
-            colorsPerTile = new Color32[256];
-            for (int i = 0; i < colorsPerTile.Length; i++)
-            {
-                colorsPerTile[i] = Color.white;
-
-                colorsPerTile[i] = new Color32(
-                    (byte) Random.Range(127, 255),
-                    (byte) Random.Range(127, 255),
-                    (byte) Random.Range(127, 255), 
-                    255);
-            }
-        }
     }
 
     public void OnTilemapTileChanged (int tileX, int tileY)
