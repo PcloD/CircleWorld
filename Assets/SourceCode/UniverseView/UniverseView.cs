@@ -6,13 +6,16 @@ public class UniverseView : MonoBehaviour, IUniverseListener
 {
     public UniverseViewFactory universeFactory;
     
+    public int MaxActivePlanetViews = 2;
+    
     [HideInInspector]
     [System.NonSerialized]
     public AvatarView avatarView;
 
     private Universe universe = new Universe();
     
-    private List<PlanetView> planetViews = new List<PlanetView>(32);
+    private PlanetView[] planetViews = new PlanetView[Universe.MAX_THINGS];
+    private List<PlanetView> activePlanetViews = new List<PlanetView>(32);
     private List<UniverseObjectView> tilemapObjectViews = new List<UniverseObjectView>(32);
 
     private Mesh mesh;
@@ -66,14 +69,18 @@ public class UniverseView : MonoBehaviour, IUniverseListener
         return null;
     }
     
+    public bool ExistsPlanetView(TilemapCircle tilemapCircle)
+    {
+        return false;
+    }
+    
     public PlanetView GetPlanetView(ushort thingIndex)
     {
-        for (int i = 0; i < planetViews.Count; i++)
-            if (planetViews[i].Planet.ThingIndex == thingIndex)
-                return planetViews[i];
+        if (planetViews[thingIndex] != null)
+            return planetViews[thingIndex];
         
-        if (planetViews.Count > 1)
-            universe.ReturnPlanet(planetViews[0].Planet);
+        if (activePlanetViews.Count >= MaxActivePlanetViews)
+            universe.ReturnPlanet(activePlanetViews[0].Planet);
         
         Planet planet = universe.GetPlanet(thingIndex);
         
@@ -81,7 +88,9 @@ public class UniverseView : MonoBehaviour, IUniverseListener
         
         planetView.InitPlanet(planet, this);
         
-        planetViews.Add(planetView);
+        activePlanetViews.Add(planetView);
+        
+        planetViews[thingIndex] = planetView;
         
         //Debug.Log(planetViews.Count);
         
@@ -90,15 +99,17 @@ public class UniverseView : MonoBehaviour, IUniverseListener
     
     public void OnPlanetReturned(Planet planet)
     {
-        for (int i = 0; i < planetViews.Count; i++)
+        planetViews[planet.ThingIndex] = null;
+        
+        for (int i = 0; i < activePlanetViews.Count; i++)
         {
-            if (planetViews[i].Planet == planet)
+            if (activePlanetViews[i].Planet == planet)
             {
-                PlanetView planetView = planetViews[i];
+                PlanetView planetView = activePlanetViews[i];
                 
                 universeFactory.ReturnPlanet(planetView);
                 
-                planetViews.RemoveAt(i);
+                activePlanetViews.RemoveAt(i);
                 
                 break;
             }
@@ -124,74 +135,9 @@ public class UniverseView : MonoBehaviour, IUniverseListener
         universe.UpdateUniverse(deltaTime);
         
         if (IsVisible())
-        {
             UpdateMesh(false);
-        
-            UpdateClickOnPlanetToTravel();
-        }
     }
     
-    private void UpdateClickOnPlanetToTravel()
-    {
-        bool clickTravel = false;
-        Vector2 clickPosition = Vector2.zero;
-        
-        if (Application.platform == RuntimePlatform.Android || Application.platform == RuntimePlatform.IPhonePlayer)
-        {
-            if (Input.touchCount == 1 && Input.GetTouch(0).phase == TouchPhase.Began)
-            {
-                clickTravel = true;
-                clickPosition = Input.GetTouch(0).position;
-            }
-        }
-        else
-        {
-            if (Input.GetMouseButtonDown(0))
-            {
-                clickTravel = true;
-                clickPosition = Input.mousePosition;
-            }
-        }
-        
-        if (clickTravel)
-        {
-            Vector2 worldPos = Camera.main.ScreenToWorldPoint(clickPosition);
-            Vector2 worldPosTolerance = Camera.main.ScreenToWorldPoint(clickPosition + Vector2.right * (Screen.dpi > 0 ? Screen.dpi : 72) / 2.54f); //1 cm tolerance
-            
-            float clickTolerance = (worldPosTolerance - worldPos).magnitude;
-            
-            ushort closestThingIndex = ushort.MaxValue;
-            float closestThingDistance = float.MaxValue;
-            
-            ThingPosition[] thingsPositions = universe.ThingsPositions;
-            ushort[] thingsToRender = universe.ThingsToRender;
-            ushort thingsToRenderAmount = universe.ThingsToRenderAmount;
-            
-            for (ushort i = 0; i < thingsToRenderAmount; i++)
-            {
-                ThingPosition thingPosition = thingsPositions[thingsToRender[i]];
-                
-                float distance = (worldPos - new Vector2(thingPosition.x, thingPosition.y)).sqrMagnitude;
-                
-                if (distance < (thingPosition.radius + clickTolerance) * (thingPosition.radius + clickTolerance) && 
-                    distance < closestThingDistance)
-                {
-                    closestThingIndex = thingsToRender[i];
-                    closestThingDistance = distance;
-                }
-            }
-            
-            if (closestThingIndex != ushort.MaxValue)
-            {
-                PlanetView targetPlanetView = GetPlanetView(closestThingIndex);
-                
-                avatarView.UniverseObject.SetParent(
-                    targetPlanetView.TilemapCircle,
-                    targetPlanetView.TilemapCircle.GetPositionFromTileCoordinate(0, targetPlanetView.TilemapCircle.Height)
-                );
-            }
-        }
-    }
     
     public void SetVisible(bool visible)
     {
@@ -225,7 +171,7 @@ public class UniverseView : MonoBehaviour, IUniverseListener
         if (mesh == null)
         {
             mesh = new Mesh();
-            mesh.MarkDynamic();
+            //mesh.MarkDynamic();
         }
 
         int vertexOffset = 0;
@@ -262,18 +208,11 @@ public class UniverseView : MonoBehaviour, IUniverseListener
 
         vertexOffset = 0;
   
-        ushort avatarPlanet;
-        
-        if (!IsVisible())
-            avatarPlanet = (avatarView.UniverseObject.parent as Planet).ThingIndex;
-        else
-            avatarPlanet = ushort.MaxValue;
-        
         for (int i = 0; i < thingsToRenderAmount; i++)
         {
             ushort thingIndex = thingsToRender[i];
             
-            if (avatarPlanet != thingIndex)
+            if (planetViews[thingIndex] == null)
             {
                 ThingPosition position = thingsPositions[thingIndex];
             
@@ -291,6 +230,7 @@ public class UniverseView : MonoBehaviour, IUniverseListener
             }
             else
             {
+                //Planet view active, don't draw preview
                 vertices[vertexOffset + 0].x = 0;
                 vertices[vertexOffset + 0].y = 0;
     

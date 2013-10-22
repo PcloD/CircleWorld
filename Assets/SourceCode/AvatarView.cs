@@ -10,21 +10,6 @@ public class AvatarView : UniverseObjectView
     public override void OnUniverseObjectUpdated(float deltaTime)
     {
         UpdatePosition();
-        
-        Camera.main.GetComponent<UniverseViewCamera>().UpdatePosition();
-        
-        if (!universeView.IsVisible())
-        {
-            UpdateMovementFromInput();
-            
-            if (inputHorizontal == 0 && inputJump == false)
-                UpdateTilesModification();
-        }
-        else
-        {
-            UniverseEngine.Avatar avatar = (UniverseEngine.Avatar) universeObject;
-            avatar.Walk(0);
-        }
     }
     
     public override void OnParentChanged (TilemapCircle parent)
@@ -36,7 +21,7 @@ public class AvatarView : UniverseObjectView
     {
         if (Application.platform == RuntimePlatform.Android || Application.platform == RuntimePlatform.IPhonePlayer)
         {
-            if (Input.touchCount == 1)
+            if (Input.touchCount == 1 && Input.GetTouch(0).phase == TouchPhase.Ended)
             {
                 int tileX, tileY;
                 if (GetTileCoordinatesUnderTouch(out tileX, out tileY))
@@ -60,7 +45,7 @@ public class AvatarView : UniverseObjectView
         }
 	}
     
-    private void UpdateMovementFromInput()
+    public void UpdateInput()
     {
         UniverseEngine.Avatar avatar = (UniverseEngine.Avatar) universeObject;
         
@@ -83,6 +68,9 @@ public class AvatarView : UniverseObjectView
                 if (avatar.CanJump())
                     avatar.Jump();
         }
+        
+        if (inputHorizontal == 0 && inputJump == false)
+            UpdateTilesModification();
     }
 
     private bool GetTileCoordinatesUnderMouse(out int tileX, out int tileY)

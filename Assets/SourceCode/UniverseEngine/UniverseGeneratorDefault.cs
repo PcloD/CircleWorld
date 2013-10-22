@@ -8,7 +8,7 @@ namespace UniverseEngine
         {
             int galaxyOrbits = random.Next(10, 20);
 
-            ushort galaxySafeRadius = things[currentThing].safeRadius;
+            ushort galaxySafeRadius = (ushort) (things[currentThing].safeRadius / 8);
             ushort solarSystemRadius = (ushort) (galaxySafeRadius / (galaxyOrbits * 2));
 
             for (int i = 0; i < galaxyOrbits; i++)
@@ -20,7 +20,7 @@ namespace UniverseEngine
                     Math.Max(i * 5, 1) + 1
                     );
 
-                short solarSystemOrbitalPeriod = (short) random.Next(30, 60);
+                short solarSystemOrbitalPeriod = (short) random.Next(120, 240);
                 if (random.Next(0, 2) == 0)
                     solarSystemOrbitalPeriod = (short) -solarSystemOrbitalPeriod;
 

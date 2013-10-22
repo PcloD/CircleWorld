@@ -1,7 +1,10 @@
 using UnityEngine;
+using UniverseEngine;
 
 public class UniverseViewCamera : MonoBehaviour
 {
+    static public UniverseViewCamera Instance;
+    
     private const float CAMERA_Z = -10;
     
     public float cameraDistance = 10;
@@ -32,21 +35,55 @@ public class UniverseViewCamera : MonoBehaviour
 
     public void Awake()
     {
+        Instance = this;
+        
         trans = transform;
         cam = camera;
         
         trans.position = new Vector3(0, 0, CAMERA_Z);
     }
  
-    //Called by AvatarView.OnTilemapObjectUpdated()
+    //Called by GameLogic
     public void UpdatePosition()
     {
-        UpdateZoom();
-  
+        positionVelocity = Vector3.zero;
+        scaleVelocity = 0;
+        smoothTime = 0;
+        
         if (followingObject)
             UpdateFollowingObject();
         else
             UpdateMove();
+    }
+    
+    //Called by GameLogic
+    private Vector3 positionVelocity;
+    private float scaleVelocity;
+    private float smoothTime;
+    
+    public bool UpdatePositionSmooth()
+    {
+        smoothTime += Time.deltaTime;
+        
+        if (followingObject)
+        {
+            Vector3 newPosition = followingObject.trans.position;
+            newPosition.z = CAMERA_Z;
+            
+            Quaternion newRotation = followingObject.trans.rotation;
+            float newScale = followingObject.UniverseObject.Scale;
+            
+            trans.position = Vector3.SmoothDamp(trans.position, newPosition, ref positionVelocity, 0.5f);
+            trans.rotation = Quaternion.RotateTowards(trans.rotation, newRotation, Time.deltaTime * 90.0f);
+            
+            scale = Mathf.SmoothDamp(scale, newScale, ref scaleVelocity, 1.0f);
+            
+            return smoothTime > 2.0f;
+        }
+        else
+        {
+            return true;
+        }
     }
     
     private void UpdateFollowingObject()
@@ -60,7 +97,7 @@ public class UniverseViewCamera : MonoBehaviour
         scale = followingObject.UniverseObject.Scale;
     }
 
-    private void UpdateZoom()
+    public void UpdateZoomInput()
     {
         if (moving)
             return;
@@ -177,4 +214,121 @@ public class UniverseViewCamera : MonoBehaviour
             }
         }
     }
+    
+
+    private bool travelInput;
+    private Vector2 travelInputStartPosition;
+    
+    public void UpdateClickOnPlanetToTravel(UniverseView universeView)
+    {
+        bool clickTravel = false;
+        Vector2 clickPosition = Vector2.zero;
+        
+        if (Application.platform == RuntimePlatform.Android || Application.platform == RuntimePlatform.IPhonePlayer)
+        {
+            if (!travelInput)
+            {
+                if (Input.touchCount == 1 && Input.GetTouch(0).phase == TouchPhase.Began)
+                {
+                    travelInput = true;
+                    travelInputStartPosition = Input.GetTouch(0).position;
+                }
+                else
+                {
+                    travelInput = false;
+                }
+            }
+            else
+            {
+                if (Input.touchCount == 1)
+                {
+                    if (Input.GetTouch(0).phase == TouchPhase.Ended)
+                    {
+                        if ((travelInputStartPosition - Input.GetTouch(0).position).magnitude < 10)
+                        {
+                            clickTravel = true;
+                            clickPosition = Input.GetTouch(0).position;
+                        }
+                        
+                        travelInput = false;
+                    }
+                }
+                else
+                {
+                    travelInput = false;
+                }
+            }
+        }
+        else
+        {
+            if (!travelInput)
+            {
+                if (Input.GetMouseButtonDown(0))
+                {
+                    travelInput = true;
+                    travelInputStartPosition = Input.mousePosition;
+                }
+                else
+                {
+                    travelInput = false;
+                }
+            }
+            else
+            {
+                if (Input.GetMouseButtonUp(0))
+                {
+                    if ((travelInputStartPosition - (Vector2) Input.mousePosition).magnitude < 10)
+                    {
+                        clickTravel = true;
+                        clickPosition = Input.mousePosition;
+                    }
+                    
+                    travelInput = false;
+                }
+                else if (!Input.GetMouseButton(0))
+                {
+                    travelInput = false;
+                }
+            }            
+        }
+        
+        if (clickTravel)
+        {
+            Vector2 worldPos = Camera.main.ScreenToWorldPoint(clickPosition);
+            Vector2 worldPosTolerance = Camera.main.ScreenToWorldPoint(clickPosition + Vector2.right * (Screen.dpi > 0 ? Screen.dpi : 72) / 2.54f); //1 cm tolerance
+            
+            float clickTolerance = (worldPosTolerance - worldPos).magnitude;
+            
+            ushort closestThingIndex = ushort.MaxValue;
+            float closestThingDistance = float.MaxValue;
+            
+            ThingPosition[] thingsPositions = universeView.Universe.ThingsPositions;
+            ushort[] thingsToRender = universeView.Universe.ThingsToRender;
+            ushort thingsToRenderAmount = universeView.Universe.ThingsToRenderAmount;
+            
+            for (ushort i = 0; i < thingsToRenderAmount; i++)
+            {
+                ThingPosition thingPosition = thingsPositions[thingsToRender[i]];
+                
+                float distance = (worldPos - new Vector2(thingPosition.x, thingPosition.y)).sqrMagnitude;
+                
+                if (distance < (thingPosition.radius + clickTolerance) * (thingPosition.radius + clickTolerance) && 
+                    distance < closestThingDistance)
+                {
+                    closestThingIndex = thingsToRender[i];
+                    closestThingDistance = distance;
+                }
+            }
+            
+            
+            
+            if (closestThingIndex != ushort.MaxValue)
+            {
+                PlanetView targetPlanetView = universeView.GetPlanetView(closestThingIndex);
+                
+                if (universeView.avatarView.UniverseObject.parent != targetPlanetView.TilemapCircle)
+                    GameLogic.Instace.TravelToPlanet(targetPlanetView);
+            }
+        }
+    }    
 }

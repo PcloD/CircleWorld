@@ -6,7 +6,7 @@ namespace UniverseEngine
 {
     public class Universe
     {
-        public const int MAX_THINGS = 32767;
+        public const int MAX_THINGS = 8192;
 
         private Thing[] things = new Thing[MAX_THINGS];
         private ThingPosition[] thingsPositions = new ThingPosition[MAX_THINGS];
