@@ -18,7 +18,9 @@ public class UniverseView : MonoBehaviour, IUniverseListener
     private List<PlanetView> activePlanetViews = new List<PlanetView>(32);
     private List<UniverseObjectView> tilemapObjectViews = new List<UniverseObjectView>(32);
 
-    private Mesh mesh;
+    private Mesh mesh1;
+    private Mesh mesh2;
+    private int frameCount;
     private Vector3[] vertices;
     private int[] triangles;
     private Vector2[] uvs;
@@ -27,6 +29,8 @@ public class UniverseView : MonoBehaviour, IUniverseListener
     private Transform trans;
     
     private PlanetType[] planetTypes;
+
+    private MeshFilter meshFilter;
     
     public Universe Universe
     {
@@ -45,6 +49,8 @@ public class UniverseView : MonoBehaviour, IUniverseListener
         renderer.sharedMaterial.mainTexture = SpriteMeshEngine.SpriteSheetManager.GetSpriteSheet("Planets").Texture;
         
         planetTypes = PlanetTypes.GetPlanetTypes();
+
+        meshFilter = GetComponent<MeshFilter>();
     }
     
     public void Init(int seed)
@@ -135,7 +141,11 @@ public class UniverseView : MonoBehaviour, IUniverseListener
         universe.UpdateUniverse(deltaTime);
         
         if (IsVisible())
+        {
+            Profiler.BeginSample("UniverseView.UpdateMesh");
             UpdateMesh(false);
+            Profiler.EndSample();
+        }
     }
     
     
@@ -168,9 +178,15 @@ public class UniverseView : MonoBehaviour, IUniverseListener
         if (triangles == null || triangles.Length != triangleCount)
             triangles = new int[triangleCount];
 
-        if (mesh == null)
+        if (mesh1 == null)
         {
-            mesh = new Mesh();
+            mesh1 = new Mesh();
+            //mesh.MarkDynamic();
+        }
+
+        if (mesh2 == null)
+        {
+            mesh2 = new Mesh();
             //mesh.MarkDynamic();
         }
 
@@ -212,51 +228,80 @@ public class UniverseView : MonoBehaviour, IUniverseListener
         {
             ushort thingIndex = thingsToRender[i];
             
-            if (planetViews[thingIndex] == null)
-            {
-                ThingPosition position = thingsPositions[thingIndex];
-            
-                vertices[vertexOffset + 0].x = position.x - position.radius;
-                vertices[vertexOffset + 0].y = position.y - position.radius;
-    
-                vertices[vertexOffset + 1].x = position.x - position.radius;
-                vertices[vertexOffset + 1].y = position.y + position.radius;
-    
-                vertices[vertexOffset + 2].x = position.x + position.radius;
-                vertices[vertexOffset + 2].y = position.y + position.radius;
-    
-                vertices[vertexOffset + 3].x = position.x + position.radius;
-                vertices[vertexOffset + 3].y = position.y - position.radius;
-            }
-            else
-            {
-                //Planet view active, don't draw preview
-                vertices[vertexOffset + 0].x = 0;
-                vertices[vertexOffset + 0].y = 0;
-    
-                vertices[vertexOffset + 1].x = 0;
-                vertices[vertexOffset + 1].y = 0;
-    
-                vertices[vertexOffset + 2].x = 0;
-                vertices[vertexOffset + 2].y = 0;
-    
-                vertices[vertexOffset + 3].x = 0;
-                vertices[vertexOffset + 3].y = 0;
-            }            
+            ThingPosition position = thingsPositions[thingIndex];
+        
+            vertices[vertexOffset + 0].x = position.x - position.radius;
+            vertices[vertexOffset + 0].y = position.y - position.radius;
+
+            vertices[vertexOffset + 1].x = position.x - position.radius;
+            vertices[vertexOffset + 1].y = position.y + position.radius;
+
+            vertices[vertexOffset + 2].x = position.x + position.radius;
+            vertices[vertexOffset + 2].y = position.y + position.radius;
+
+            vertices[vertexOffset + 3].x = position.x + position.radius;
+            vertices[vertexOffset + 3].y = position.y - position.radius;
 
             vertexOffset += 4;
         }
 
-        mesh.vertices = vertices;
+        //Don't draw preview of active planets
+        if (!firstTime)
+        {
+            for (int i = 0; i < activePlanetViews.Count; i++)
+            {
+                ushort thingIndex = activePlanetViews[i].Planet.ThingIndex;
+
+                int thingsToRenderIndex = System.Array.BinarySearch(thingsToRender, 0, thingsToRenderAmount, thingIndex);
+
+                if (thingsToRenderIndex >= 0)
+                {
+                    vertexOffset = thingsToRenderIndex * 4;
+
+                    vertices[vertexOffset + 0].x = 0;
+                    vertices[vertexOffset + 0].y = 0;
+
+                    vertices[vertexOffset + 1].x = 0;
+                    vertices[vertexOffset + 1].y = 0;
+
+                    vertices[vertexOffset + 2].x = 0;
+                    vertices[vertexOffset + 2].y = 0;
+
+                    vertices[vertexOffset + 3].x = 0;
+                    vertices[vertexOffset + 3].y = 0;
+                }
+            }
+        }
 
         if (firstTime)
         {
-            mesh.triangles = triangles;
-            mesh.uv = uvs;
-            mesh.bounds = new Bounds(Vector3.zero, new Vector3(ushort.MaxValue * 2, ushort.MaxValue * 2, 0.0f));
+            mesh1.vertices = vertices;
+            mesh2.vertices = vertices;
 
-            GetComponent<MeshFilter>().sharedMesh = mesh;
+            mesh1.triangles = triangles;
+            mesh1.uv = uvs;
+            mesh1.bounds = new Bounds(Vector3.zero, new Vector3(ushort.MaxValue * 2, ushort.MaxValue * 2, 0.0f));
+
+            mesh2.triangles = triangles;
+            mesh2.uv = uvs;
+            mesh2.bounds = new Bounds(Vector3.zero, new Vector3(ushort.MaxValue * 2, ushort.MaxValue * 2, 0.0f));
+
+            mesh1.Optimize();
+            mesh2.Optimize();
         }
+
+        if ((frameCount % 2) == 0)
+        {
+            mesh1.vertices = vertices;
+            meshFilter.sharedMesh = mesh1;
+        }
+        else
+        {
+            mesh2.vertices = vertices;
+            meshFilter.sharedMesh = mesh2;
+        }
+
+        frameCount++;
     }
 }
 

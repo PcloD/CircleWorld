@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿//#define ENABLE_PERFORMANCE
+
+using UnityEngine;
 using System.Collections;
 
 public class Performance : MonoBehaviour 
@@ -8,10 +10,7 @@ public class Performance : MonoBehaviour
     private float time;
     private string performance;
 
-    public void Awake()
-    {
-    }
-	
+#if ENABLE_PERFORMANCE
 	// Update is called once per frame
 	void Update () 
     {
@@ -33,6 +32,6 @@ public class Performance : MonoBehaviour
     public void OnGUI()
     {
         GUI.Label(new Rect(0, 0, 100, 100), performance);
-
     }
+#endif
 }

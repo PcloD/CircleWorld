@@ -59,7 +59,7 @@ public class GameLogic : MonoBehaviour
                 universeTimeMultiplier = Mathf.SmoothDamp(universeTimeMultiplier, 1.0f, ref universeTimeMultiplierVelocity, 0.25f);
                 universeView.UpdateUniverse(Time.deltaTime * universeTimeMultiplier);
                 universeCamera.UpdatePosition();
-                universeView.avatarView.UpdateInput();
+                universeView.avatarView.UpdateFromInput();
                 
                 universeCamera.UpdateZoomInput();
                 universeCamera.UpdateClickOnPlanetToTravel(universeView);

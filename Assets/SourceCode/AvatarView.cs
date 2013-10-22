@@ -1,3 +1,5 @@
+//#define ENABLE_ONGUI
+
 using UnityEngine;
 using System.Collections;
 using UniverseEngine;
@@ -45,32 +47,58 @@ public class AvatarView : UniverseObjectView
         }
 	}
     
-    public void UpdateInput()
+    public void UpdateFromInput()
     {
         UniverseEngine.Avatar avatar = (UniverseEngine.Avatar) universeObject;
         
+        if (avatar.CanWalk())
+            avatar.Walk(inputHorizontal);
+
+        if (inputJump)
+            if (avatar.CanJump())
+                avatar.Jump();
+
+        if (inputHorizontal == 0 && inputJump == false)
+            UpdateTilesModification();
+    }
+
+    public void Update()
+    {
         if (Application.platform == RuntimePlatform.Android || Application.platform == RuntimePlatform.IPhonePlayer)
         {
-            //Input is updated in OnGUI()
-            if (avatar.CanWalk())
-                avatar.Walk(inputHorizontal);
-   
-            if (inputJump)
-                if (avatar.CanJump())
-                    avatar.Jump();
+            int touchCount = Input.touchCount;
+            Touch touch1 = (touchCount > 0 ? Input.GetTouch(0) : new Touch());
+            Touch touch2 = (touchCount > 1 ? Input.GetTouch(1) : new Touch());
+
+            inputHorizontal = 0;
+            inputJump = false;
+
+            if (touchCount >= 1)
+            {
+                if (touch1.position.x > Screen.width / 2.0f && touch1.position.y < Screen.height * 0.33f ||
+                    touchCount > 1 && touch2.position.x > Screen.width / 2.0f  && touch2.position.y < Screen.height * 0.33f)
+                {
+                    inputJump = true;
+                }
+
+                if (touch1.position.x < Screen.width / 4.0f  && touch1.position.y < Screen.height * 0.33f ||
+                    touchCount > 1 && touch2.position.x < Screen.width / 4.0f && touch2.position.y < Screen.height * 0.33f)
+                {
+                    inputHorizontal = -1.0f;
+                }
+                else if (touch1.position.x < Screen.width / 2.0f  && touch1.position.y < Screen.height * 0.33f ||
+                         touchCount > 1 && touch2.position.x < Screen.width / 2.0f && touch2.position.y < Screen.height * 0.33f)
+                {
+                    inputHorizontal = 1.0f;
+                }
+            }
         }
         else
         {
-            if (avatar.CanWalk())
-                avatar.Walk(Input.GetAxis("Horizontal"));
-            
-            if (Input.GetKey(KeyCode.Z) || Input.GetKey(KeyCode.Space))
-                if (avatar.CanJump())
-                    avatar.Jump();
+            inputHorizontal = Input.GetAxis("Horizontal");
+
+            inputJump = Input.GetKey(KeyCode.Z) || Input.GetKey(KeyCode.Space);
         }
-        
-        if (inputHorizontal == 0 && inputJump == false)
-            UpdateTilesModification();
     }
 
     private bool GetTileCoordinatesUnderMouse(out int tileX, out int tileY)
@@ -92,7 +120,8 @@ public class AvatarView : UniverseObjectView
 
         return parentView.TilemapCircle.GetTileCoordinatesFromPosition(worldPos, out tileX, out tileY);
     }
-    
+
+#if ENABLE_ONGUI
     public void OnGUI()
     {
         if (Application.platform != RuntimePlatform.Android && Application.platform != RuntimePlatform.IPhonePlayer)
@@ -115,7 +144,8 @@ public class AvatarView : UniverseObjectView
         if (GUI.RepeatButton(new Rect(Screen.width - (size + space) * 1, bottom - size, size, size), "Jump"))
             inputJump = true;
     }
-    
+#endif
+
     public override void OnDrawGizmos ()
     {
         float sizeY = 1.05f;

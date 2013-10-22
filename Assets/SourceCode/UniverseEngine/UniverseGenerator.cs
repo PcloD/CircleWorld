@@ -57,6 +57,9 @@ namespace UniverseEngine
 
         protected void PushThing(ThingType type, ushort angle, ushort distance, short rotationPeriod, short orbitalPeriod, ushort radius, ushort safeRadius, int seed)
         {
+            //TODO: Remove once planet rotations are correctly implemented
+            rotationPeriod = 0;
+
             things[currentThing].childs++;
 
             things[thingsAmount].parent = currentThing;
@@ -69,10 +72,16 @@ namespace UniverseEngine
             things[thingsAmount].radius = radius;
             things[thingsAmount].safeRadius = safeRadius;
             things[thingsAmount].seed = seed;
+
+            if (orbitalPeriod != 0)
+                things[thingsAmount].orbitalPeriodInv = 1.0f / orbitalPeriod;
+            else
+                things[thingsAmount].orbitalPeriodInv = 0.0f;
             
-            //TODO: Remove once planet rotations are correctly implemented
-            things[thingsAmount].rotationPeriod = 0;
-            //things[thingsAmount].orbitalPeriod = 0;
+            if (rotationPeriod != 0)
+                things[thingsAmount].rotationPeriodInv = 1.0f / rotationPeriod;
+            else
+                things[thingsAmount].rotationPeriodInv = 0.0f;
 
             currentThing = thingsAmount;
             thingsAmount++;
@@ -84,7 +93,3 @@ namespace UniverseEngine
         }
     }
 }
-
-
-
-

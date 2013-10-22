@@ -1,3 +1,5 @@
+//#define USE_SIN_TABLE
+
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -7,6 +9,11 @@ namespace UniverseEngine
     public class Universe
     {
         public const int MAX_THINGS = 8192;
+
+        private const float HALF_PI = Mathf.PI * 0.5f; //90 degress in radians
+        private const float TWO_PI = Mathf.PI * 2.0f; //360 degress in radians
+        private const float INV_TWO_PI = 1.0f / (Mathf.PI * 2.0f); 
+        private const float DEG_TO_RAD_OVER_100 = 0.000174532925f; //(degrees to radians / 100)
 
         private Thing[] things = new Thing[MAX_THINGS];
         private ThingPosition[] thingsPositions = new ThingPosition[MAX_THINGS];
@@ -96,10 +103,17 @@ namespace UniverseEngine
 
         public void UpdateUniverse(float deltaTime)
         {
+#if USE_SIN_TABLE
+            if (sinTable == null)
+                InitSinTable();
+#endif
+
             time += deltaTime;
-            
-            UpdatePositions(0, 0, 0, time);
-            
+
+            Profiler.BeginSample("Universe.UpdatePositions");
+            UpdatePositions(time);
+            Profiler.EndSample();
+
             for (int i = 0; i < planets.Count; i++)
                 planets[i].Update(deltaTime);
             
@@ -107,51 +121,88 @@ namespace UniverseEngine
                 tilemapObjects[i].Update(deltaTime);
         }
 
-        private int UpdatePositions(int index, float x, float y, float time)
+#if USE_SIN_TABLE
+        private const int SIN_TABLE_LEN = 512;
+        private const float SIN_TABLE_LEN_F = SIN_TABLE_LEN;
+        private const float SIN_TABLE_INDEX = INV_TWO_PI * SIN_TABLE_LEN_F;
+
+        static private float[] sinTable;
+        static private float[] cosTable;
+
+        static private void InitSinTable()
         {
-            int childs = things[index].childs;
+            sinTable = new float[SIN_TABLE_LEN];
+            cosTable = new float[SIN_TABLE_LEN];
 
-            float angle = things[index].angle * 0.000174532925f; //(degrees to radians / 100)
-            float distance = things[index].distance;
+            for (int i = 0; i < sinTable.Length; i++)
+            {
+                sinTable[i] = Mathf.Sin((i * TWO_PI) / SIN_TABLE_LEN_F);
+                cosTable[i] = Mathf.Cos((i * TWO_PI) / SIN_TABLE_LEN_F);
 
-            float normalizedOrbitalPeriod;
-            
-            if (things[index].orbitalPeriod != 0)
-                normalizedOrbitalPeriod = time / things[index].orbitalPeriod;
-            else
-                normalizedOrbitalPeriod = 0;
-            
-            normalizedOrbitalPeriod = normalizedOrbitalPeriod - (int)normalizedOrbitalPeriod;
-
-            float normalizedRotationPeriod;
-            
-            if (things[index].rotationPeriod != 0)
-                normalizedRotationPeriod = time / things[index].rotationPeriod;
-            else
-                normalizedRotationPeriod = 0;
-            
-            normalizedRotationPeriod = normalizedRotationPeriod - (int)normalizedRotationPeriod;
-
-            angle += 6.28318531f * normalizedOrbitalPeriod; //360 degrees to radians
-
-            x += ((float) Math.Cos(angle)) * distance;
-            y += ((float) Math.Sin(angle)) * distance;
-
-            thingsPositions[index].x = x;
-            thingsPositions[index].y = y;
-            thingsPositions[index].rotation = normalizedRotationPeriod * 6.28318531f; //360 degrees to radian
-            thingsPositions[index].radius = things[index].radius;
-
-            //UnityEngine.Debug.Log(string.Format("Thing: {0} x: {1} y: {1}", index, x, y));
-
-            index++;
-
-            for (int i = 0; i < childs; i++)
-                index = UpdatePositions(index, x, y, time);
-
-            return index;
+                //Debug.Log(sinTable[i]);
+            }
         }
-        
+
+        static private float Sin(float angle)
+        {
+            return sinTable[(int)(angle * SIN_TABLE_INDEX) % SIN_TABLE_LEN];
+        }
+
+        static private float Cos(float angle)
+        {
+            //return cosTable[(int)(angle * SIN_TABLE_INDEX) % SIN_TABLE_LEN];
+
+            return sinTable[(int)((angle + HALF_PI) * SIN_TABLE_INDEX) % SIN_TABLE_LEN];
+        }
+#endif
+
+        private void UpdatePositions(float time)
+        {
+            for (int index = 1; index < thingsAmount; index++)
+            {
+                Thing thing = things[index];
+
+                float parentX = thingsPositions[thing.parent].x;
+                float parentY = thingsPositions[thing.parent].y;
+
+                float angle = thing.angle * DEG_TO_RAD_OVER_100;
+                float distance = thing.distance;
+
+                float normalizedOrbitalPeriod = time * thing.orbitalPeriodInv;
+
+                //if (thing.orbitalPeriod != 0)
+                //    normalizedOrbitalPeriod = time / thing.orbitalPeriod;
+                //else
+                //    normalizedOrbitalPeriod = 0;
+
+                normalizedOrbitalPeriod -= (int)normalizedOrbitalPeriod;
+
+                float normalizedRotationPeriod = time * thing.rotationPeriodInv;
+
+                //if (thing.rotationPeriod != 0)
+                //    normalizedRotationPeriod = time / thing.rotationPeriod;
+                //else
+                //    normalizedRotationPeriod = 0;
+
+                normalizedRotationPeriod -= (int)normalizedRotationPeriod;
+
+                angle += TWO_PI * normalizedOrbitalPeriod; //360 degrees to radians
+
+#if USE_SIN_TABLE
+                if (angle < 0)
+                    angle += TWO_PI;
+
+                thingsPositions[index].x = parentX + Cos(angle) * distance;
+                thingsPositions[index].y = parentY + Sin(angle) * distance;
+#else
+                thingsPositions[index].x = parentX + ((float)Math.Cos(angle)) * distance;
+                thingsPositions[index].y = parentY + ((float)Math.Sin(angle)) * distance;
+#endif
+                thingsPositions[index].rotation = normalizedRotationPeriod * TWO_PI; //360 degrees to radian
+                thingsPositions[index].radius = thing.radius;
+            }
+        }
+
         public Thing GetThing(ushort thingIndex)
         {
             return things[thingIndex];

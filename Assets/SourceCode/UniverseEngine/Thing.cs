@@ -20,5 +20,9 @@ namespace UniverseEngine
         public ushort safeRadius; //Radius at which things can orbit this thing without colliding with any brother
 
         public int seed; //Seed used to create the thing
+
+        //Cache
+        public float orbitalPeriodInv;
+        public float rotationPeriodInv;
     }
 }
