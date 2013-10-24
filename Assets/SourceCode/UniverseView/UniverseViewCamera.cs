@@ -16,7 +16,6 @@ public class UniverseViewCamera : MonoBehaviour
     private bool moving;
 
     private Vector3 movingFromInputPosition;
-    private Vector3 movingFromWorldPosition;
     private int moveTouchFingerId;
 
     private bool zooming;
@@ -26,6 +25,7 @@ public class UniverseViewCamera : MonoBehaviour
     private Vector3 zoomingTouchFinger2FromPosition;
     
     private UniverseObjectView followingObject;
+    private Vector2 followingObjectDelta;
     
     public UniverseObjectView FollowingObject 
     {
@@ -46,39 +46,43 @@ public class UniverseViewCamera : MonoBehaviour
     //Called by GameLogic
     public void UpdatePosition()
     {
-        positionVelocity = Vector3.zero;
-        scaleVelocity = 0;
+        //positionVelocity = Vector3.zero;
+        //scaleVelocity = 0;
         smoothTime = 0;
         
         if (followingObject)
             UpdateFollowingObject();
-        else
-            UpdateMove();
     }
     
     //Called by GameLogic
-    private Vector3 positionVelocity;
-    private float scaleVelocity;
+    //private Vector3 positionVelocity;
+    //private float scaleVelocity;
     private float smoothTime;
+    private Vector3 followingObjectDeltaVelocity;
     
     public bool UpdatePositionSmooth()
     {
         smoothTime += Time.deltaTime;
         
+        followingObjectDelta = Vector3.SmoothDamp(followingObjectDelta, Vector2.zero, ref followingObjectDeltaVelocity, 0.5f);
+        
         if (followingObject)
         {
-            Vector3 newPosition = followingObject.trans.position;
+            Vector3 newPosition = followingObject.trans.position + trans.up * followingObjectDelta.y + trans.right * followingObjectDelta.x;
             newPosition.z = CAMERA_Z;
             
             Quaternion newRotation = followingObject.trans.rotation;
             float newScale = followingObject.UniverseObject.Scale;
             
-            trans.position = Vector3.SmoothDamp(trans.position, newPosition, ref positionVelocity, 0.5f);
-            trans.rotation = Quaternion.RotateTowards(trans.rotation, newRotation, Time.deltaTime * 90.0f);
+            //trans.position = Vector3.SmoothDamp(trans.position, newPosition, ref positionVelocity, 0.5f);
+            //trans.rotation = Quaternion.RotateTowards(trans.rotation, newRotation, Time.deltaTime * 180.0f);
+            //scale = Mathf.SmoothDamp(scale, newScale, ref scaleVelocity, 1.0f);
             
-            scale = Mathf.SmoothDamp(scale, newScale, ref scaleVelocity, 1.0f);
+            trans.position = Vector3.Lerp(trans.position, newPosition, smoothTime / 1.0f);
+            trans.rotation = Quaternion.Lerp(trans.rotation, newRotation, smoothTime / 1.0f);
+            scale = Mathf.Lerp(scale, newScale, smoothTime / 1.0f);
             
-            return smoothTime > 2.0f;
+            return smoothTime > 1.0f;
         }
         else
         {
@@ -88,7 +92,10 @@ public class UniverseViewCamera : MonoBehaviour
     
     private void UpdateFollowingObject()
     {
-        Vector3 newPosition = followingObject.trans.position;
+        if (AvatarInput.mode == AvatarInputMode.Move)
+            followingObjectDelta = Vector3.SmoothDamp(followingObjectDelta, Vector2.zero, ref followingObjectDeltaVelocity, 0.5f);
+        
+        Vector3 newPosition = followingObject.trans.position + trans.up * followingObjectDelta.y + trans.right * followingObjectDelta.x;
         newPosition.z = CAMERA_Z;
         
         trans.position = newPosition;
@@ -99,9 +106,6 @@ public class UniverseViewCamera : MonoBehaviour
 
     public void UpdateZoomInput()
     {
-        if (moving)
-            return;
-
         if (Application.platform == RuntimePlatform.Android ||
             Application.platform == RuntimePlatform.IPhonePlayer)
         {
@@ -150,9 +154,16 @@ public class UniverseViewCamera : MonoBehaviour
 
         cam.orthographicSize = cameraDistance * scale;
     }
-
-    private void UpdateMove()
+    
+    public void UpdateMove()
     {
+        if (AvatarInput.mode != AvatarInputMode.Edit || AvatarInput.editTool != AvatarInputEditTool.MoveCamera)
+        {
+            moving = false;
+            return;
+        }
+
+        
         Vector3 movingToInputPosition = movingFromInputPosition;
 
         if (Application.platform == RuntimePlatform.Android ||
@@ -168,7 +179,6 @@ public class UniverseViewCamera : MonoBehaviour
                     moving = true;
 
                     movingFromInputPosition = touch.position;
-                    movingFromWorldPosition = cam.ScreenToWorldPoint(movingFromInputPosition);
                 }
             }
             else
@@ -186,7 +196,6 @@ public class UniverseViewCamera : MonoBehaviour
             {
                 moving = true;
                 movingFromInputPosition = Input.mousePosition;
-                movingFromWorldPosition = cam.ScreenToWorldPoint(movingFromInputPosition);
             }
             else if (Input.GetMouseButtonUp(0))
             {
@@ -199,15 +208,25 @@ public class UniverseViewCamera : MonoBehaviour
 
         if (moving)
         {
-            Vector3 movingToWorldPosition = cam.ScreenToWorldPoint(movingToInputPosition);
-
             if (movingFromInputPosition != movingToInputPosition)
             {
+                Vector3 movingFromWorldPosition = cam.ScreenToWorldPoint(movingFromInputPosition);
+                Vector3 movingToWorldPosition = cam.ScreenToWorldPoint(movingToInputPosition);
+                
                 Vector3 delta = movingToWorldPosition - movingFromWorldPosition;
-                Vector3 newPosition = trans.position - delta;
-                newPosition.z = CAMERA_Z;
-
-                trans.position = newPosition;
+                
+                if (followingObject)
+                {
+                    float deltaX = Vector3.Dot(delta, trans.right);
+                    float deltaY = Vector3.Dot(delta, trans.up);
+                    
+                    followingObjectDelta -= new Vector2(deltaX, deltaY);
+                    
+                    Vector3 newPosition = followingObject.trans.position + trans.up * followingObjectDelta.y + trans.right * followingObjectDelta.x;
+                    newPosition.z = CAMERA_Z;
+                    
+                    trans.position = newPosition;
+                }
 
                 movingFromInputPosition = movingToInputPosition;
                 movingFromWorldPosition = cam.ScreenToWorldPoint(movingFromInputPosition);
@@ -221,6 +240,12 @@ public class UniverseViewCamera : MonoBehaviour
     
     public void UpdateClickOnPlanetToTravel(UniverseView universeView)
     {
+        if (AvatarInput.mode != AvatarInputMode.Move)
+        {
+            travelInput = false;
+            return;
+        }
+
         bool clickTravel = false;
         Vector2 clickPosition = Vector2.zero;
         

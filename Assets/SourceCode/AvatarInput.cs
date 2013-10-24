@@ -12,7 +12,8 @@ public enum AvatarInputEditTool
 {
     None,
     Add,
-    Remove
+    Remove,
+    MoveCamera
 }
 
 public class AvatarInput : MonoBehaviour
@@ -29,13 +30,15 @@ public class AvatarInput : MonoBehaviour
     static private string[] EditToolNames = new string[] {
         "None",
         "Add Tiles",
-        "Remove Tiles"
+        "Remove Tiles",
+        "Move Camera"
     };
     
     static private string[] EditToolTooltips = new string[] {
         "Select a tool",
         "Tap on empty spaces to add tiles",
-        "Tap on tiles to remove them"
+        "Tap on tiles to remove them",
+        "Move the camera"
     };
     
     private GUIStyle centeredLabelStyle;

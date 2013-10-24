@@ -61,10 +61,10 @@ public class GameLogic : MonoBehaviour
                 universeCamera.UpdatePosition();
                 universeView.avatarView.avatarInput.UpdateInput();
                 universeView.avatarView.ProcessInput();
-                universeCamera.UpdateZoomInput();
                 
-                if (AvatarInput.mode == AvatarInputMode.Move)
-                    universeCamera.UpdateClickOnPlanetToTravel(universeView);
+                universeCamera.UpdateZoomInput();
+                universeCamera.UpdateMove();
+                universeCamera.UpdateClickOnPlanetToTravel(universeView);
                 break;
                 
             case GameLogicState.Travelling:
