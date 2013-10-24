@@ -110,9 +110,9 @@ namespace UniverseEngine
 
             time += deltaTime;
 
-            Profiler.BeginSample("Universe.UpdatePositions");
+            UEProfiler.BeginSample("Universe.UpdatePositions");
             UpdatePositions(time);
-            Profiler.EndSample();
+            UEProfiler.EndSample();
 
             for (int i = 0; i < planets.Count; i++)
                 planets[i].Update(deltaTime);

@@ -228,7 +228,7 @@ public class UniverseViewCamera : MonoBehaviour
         {
             if (!travelInput)
             {
-                if (Input.touchCount == 1 && Input.GetTouch(0).phase == TouchPhase.Began)
+                if (Input.touchCount == 1 && Input.GetTouch(0).phase == TouchPhase.Began && !AvatarInput.IsInputArea(Input.GetTouch(0).position))
                 {
                     travelInput = true;
                     travelInputStartPosition = Input.GetTouch(0).position;
@@ -263,7 +263,7 @@ public class UniverseViewCamera : MonoBehaviour
         {
             if (!travelInput)
             {
-                if (Input.GetMouseButtonDown(0))
+                if (Input.GetMouseButtonDown(0) && !AvatarInput.IsInputArea(Input.mousePosition))
                 {
                     travelInput = true;
                     travelInputStartPosition = Input.mousePosition;

@@ -1,6 +1,7 @@
 ﻿#define ENABLE_PERFORMANCE
 
 using UnityEngine;
+using UniverseEngine;
 using System.Collections;
 
 public class Performance : MonoBehaviour 
@@ -11,8 +12,13 @@ public class Performance : MonoBehaviour
     private string performance;
 
 #if ENABLE_PERFORMANCE
+    public void Awake()
+    {
+        useGUILayout = false;
+    }
+    
 	// Update is called once per frame
-	void Update () 
+	public void Update () 
     {
         frames++;
         time += Time.deltaTime;
@@ -23,15 +29,19 @@ public class Performance : MonoBehaviour
             time = 0.0f;
             frames = 0;
 
-            performance = string.Format("{0} kb - {1} fps", 
+            performance = string.Format("{0} kb\n{1} fps\nUpdatePositions {2} ms\nUpdateMesh {3} ms", 
                     System.GC.GetTotalMemory(false) / 1024,
-                    fps);
+                    fps,
+                    UEProfiler.GetSampleTime("Universe.UpdatePositions").TotalMilliseconds,
+                    UEProfiler.GetSampleTime("UniverseView.UpdateMesh").TotalMilliseconds);
+            
+            UEProfiler.Clear();
         }
 	}
 
     public void OnGUI()
     {
-        GUI.Label(new Rect(0, 0, 100, 100), performance);
+        GUI.Label(new Rect(0, 0, 200, 200), performance);
     }
 #endif
 }

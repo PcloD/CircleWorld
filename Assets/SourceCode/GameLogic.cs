@@ -59,10 +59,12 @@ public class GameLogic : MonoBehaviour
                 universeTimeMultiplier = Mathf.SmoothDamp(universeTimeMultiplier, 1.0f, ref universeTimeMultiplierVelocity, 0.25f);
                 universeView.UpdateUniverse(Time.deltaTime * universeTimeMultiplier);
                 universeCamera.UpdatePosition();
-                universeView.avatarView.UpdateFromInput();
-                
+                universeView.avatarView.avatarInput.UpdateInput();
+                universeView.avatarView.ProcessInput();
                 universeCamera.UpdateZoomInput();
-                universeCamera.UpdateClickOnPlanetToTravel(universeView);
+                
+                if (AvatarInput.mode == AvatarInputMode.Move)
+                    universeCamera.UpdateClickOnPlanetToTravel(universeView);
                 break;
                 
             case GameLogicState.Travelling:
@@ -71,7 +73,10 @@ public class GameLogic : MonoBehaviour
                 
                 universeCamera.UpdateZoomInput();
                 if (universeCamera.UpdatePositionSmooth())
+                {
+                    universeView.avatarView.avatarInput.ResetInput();
                     SwitchState(GameLogicState.Playing);
+                }
                 break;
         }
         

@@ -21,9 +21,6 @@ public class UniverseView : MonoBehaviour, IUniverseListener
     private Mesh mesh1;
     private Mesh mesh2;
     private int frameCount;
-    private Vector3[] vertices;
-    private int[] triangles;
-    private Vector2[] uvs;
     
     private Renderer rend;
     private Transform trans;
@@ -51,6 +48,10 @@ public class UniverseView : MonoBehaviour, IUniverseListener
         planetTypes = PlanetTypes.GetPlanetTypes();
 
         meshFilter = GetComponent<MeshFilter>();
+        
+        mesh1 = new Mesh();
+        
+        mesh2 = new Mesh();
     }
     
     public void Init(int seed)
@@ -142,9 +143,9 @@ public class UniverseView : MonoBehaviour, IUniverseListener
         
         if (IsVisible())
         {
-            Profiler.BeginSample("UniverseView.UpdateMesh");
+            UEProfiler.BeginSample("UniverseView.UpdateMesh");
             UpdateMesh(false);
-            Profiler.EndSample();
+            UEProfiler.EndSample();
         }
     }
     
@@ -168,62 +169,12 @@ public class UniverseView : MonoBehaviour, IUniverseListener
 
         int vertexCount = thingsToRenderAmount * 4;
         int triangleCount = thingsToRenderAmount * 6;
-
-        if (vertices == null || vertices.Length != vertexCount)
-            vertices = new Vector3[vertexCount];
-
-        if (uvs == null || uvs.Length != vertexCount)
-            uvs = new Vector2[vertexCount];
-
-        if (triangles == null || triangles.Length != triangleCount)
-            triangles = new int[triangleCount];
-
-        if (mesh1 == null)
-        {
-            mesh1 = new Mesh();
-            //mesh.MarkDynamic();
-        }
-
-        if (mesh2 == null)
-        {
-            mesh2 = new Mesh();
-            //mesh.MarkDynamic();
-        }
-
+        
+        Vector3[] vertices = DataPools.poolVector3.GetArray(vertexCount);
+        
         int vertexOffset = 0;
-
-        if (firstTime)
-        {
-            int triangleOffset = 0;
-
-            for (ushort i = 0; i < thingsToRenderAmount; i++)
-            {
-                Thing thing = things[thingsToRender[i]];
-                
-                PlanetType planetType = planetTypes[(byte) (Mathf.Abs(thing.seed % 4))];
-    
-                Rect planetUV = planetType.planetSprite.UV;
-                
-                uvs[vertexOffset + 0] = new Vector2(planetUV.xMin, planetUV.yMax);
-                uvs[vertexOffset + 1] = new Vector2(planetUV.xMax, planetUV.yMax);
-                uvs[vertexOffset + 2] = new Vector2(planetUV.xMax, planetUV.yMin);
-                uvs[vertexOffset + 3] = new Vector2(planetUV.xMin, planetUV.yMin);
-
-                triangles[triangleOffset + 0] = vertexOffset + 0;
-                triangles[triangleOffset + 1] = vertexOffset + 1;
-                triangles[triangleOffset + 2] = vertexOffset + 2;
-
-                triangles[triangleOffset + 3] = vertexOffset + 2;
-                triangles[triangleOffset + 4] = vertexOffset + 3;
-                triangles[triangleOffset + 5] = vertexOffset + 0;
-
-                triangleOffset += 6;
-                vertexOffset += 4;
-            }
-        }
-
-        vertexOffset = 0;
   
+        //Update all positions
         for (int i = 0; i < thingsToRenderAmount; i++)
         {
             ushort thingIndex = thingsToRender[i];
@@ -245,9 +196,9 @@ public class UniverseView : MonoBehaviour, IUniverseListener
             vertexOffset += 4;
         }
 
-        //Don't draw preview of active planets
+        //Don't draw preview of active planets (except the first time that everything is draw)
         if (!firstTime)
-        {
+        {   
             for (int i = 0; i < activePlanetViews.Count; i++)
             {
                 ushort thingIndex = activePlanetViews[i].Planet.ThingIndex;
@@ -275,6 +226,39 @@ public class UniverseView : MonoBehaviour, IUniverseListener
 
         if (firstTime)
         {
+            //Update triangles and uvs only the first time that the mesh is updated
+            
+            int triangleOffset = 0;
+            vertexOffset = 0;
+            
+            int[] triangles = DataPools.poolInt.GetArray(triangleCount);
+            Vector2[] uvs = DataPools.poolVector2.GetArray(vertexCount);
+
+            for (ushort i = 0; i < thingsToRenderAmount; i++)
+            {
+                Thing thing = things[thingsToRender[i]];
+                
+                PlanetType planetType = planetTypes[(byte) (Mathf.Abs(thing.seed % 4))];
+    
+                Rect planetUV = planetType.planetSprite.UV;
+                
+                uvs[vertexOffset + 0] = new Vector2(planetUV.xMin, planetUV.yMax);
+                uvs[vertexOffset + 1] = new Vector2(planetUV.xMax, planetUV.yMax);
+                uvs[vertexOffset + 2] = new Vector2(planetUV.xMax, planetUV.yMin);
+                uvs[vertexOffset + 3] = new Vector2(planetUV.xMin, planetUV.yMin);
+
+                triangles[triangleOffset + 0] = vertexOffset + 0;
+                triangles[triangleOffset + 1] = vertexOffset + 1;
+                triangles[triangleOffset + 2] = vertexOffset + 2;
+
+                triangles[triangleOffset + 3] = vertexOffset + 2;
+                triangles[triangleOffset + 4] = vertexOffset + 3;
+                triangles[triangleOffset + 5] = vertexOffset + 0;
+
+                triangleOffset += 6;
+                vertexOffset += 4;
+            }            
+            
             mesh1.vertices = vertices;
             mesh2.vertices = vertices;
 
@@ -288,6 +272,9 @@ public class UniverseView : MonoBehaviour, IUniverseListener
 
             mesh1.Optimize();
             mesh2.Optimize();
+            
+            DataPools.poolInt.ReturnArray(triangles);
+            DataPools.poolVector2.ReturnArray(uvs);
         }
 
         if ((frameCount % 2) == 0)
@@ -300,6 +287,8 @@ public class UniverseView : MonoBehaviour, IUniverseListener
             mesh2.vertices = vertices;
             meshFilter.sharedMesh = mesh2;
         }
+        
+        DataPools.poolVector3.ReturnArray(vertices);
 
         frameCount++;
     }

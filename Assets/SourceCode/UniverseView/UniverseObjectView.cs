@@ -15,6 +15,11 @@ public class UniverseObjectView : MonoBehaviour, IUniverseObjectListener
         get { return universeObject; }
     }
     
+    public TilemapCircleView ParentView
+    {
+        get { return parentView; }
+    }
+    
     public void Awake()
     {
         trans = transform;

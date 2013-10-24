@@ -520,6 +520,16 @@ namespace UniverseEngine
                     //Target outside, no hit!
                     return false;
                 }
+                else if (targetDistance < circleHeights[0])
+                {
+                    //Target inside core, core hit!
+                    hitInfo.hitTileY = 0;
+                    hitInfo.hitNormal = originNormal;
+                    hitInfo.hitPosition = position + originNormal * circleHeights[0];
+                    hitInfo.hitDistance = (origin - hitInfo.hitPosition).magnitude;
+                    
+                    return true;
+                }
     
                 hitInfo.hitTileX = (int) ((originMapAngle / (Mathf.PI * 2.0f)) * width);
                 hitInfo.hitTileX = hitInfo.hitTileX % width;
@@ -547,16 +557,6 @@ namespace UniverseEngine
                     if (hitInfo.hitTileY > 0)
                         len -= (circleHeights[hitInfo.hitTileY] - circleHeights[hitInfo.hitTileY - 1]);
                     hitInfo.hitTileY--;
-                }
-    
-                if (hitInfo.hitTileY < 0 && len >= circleHeights[1] - circleHeights[0])
-                {
-                    //Core hit!
-                    hitInfo.hitTileY = 0;
-                    hitInfo.hitNormal = originNormal;
-                    hitInfo.hitPosition = position + originNormal * circleHeights[hitInfo.hitTileY];
-                    hitInfo.hitDistance = (origin - hitInfo.hitPosition).magnitude;
-                    return true;
                 }
             }
     
