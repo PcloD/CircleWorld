@@ -12,18 +12,16 @@ public class TilemapCircleViewRenderer : MonoBehaviour
     private int toX;
     private TilemapCircleView tilemapCircleView;
     private TilemapCircle tilemapCircle;
+    
     private Vector2[] circleNormals;
     private float[] circleHeights;
 
-    private Vector3[] vertices;
-    private Color32[] colors;
-    private int[] triangles;
-    private Vector2[] uvs;
-
     private bool firstTime;
     
+    private MeshFilter meshFilter;
+    
     static private TileType[] tileTypes;
-
+    
     public void Init(TilemapCircleView tilemapCircleView, int fromX, int toX)
     {
         if (tileTypes == null)
@@ -47,21 +45,8 @@ public class TilemapCircleViewRenderer : MonoBehaviour
 
         if (mesh == null) 
             mesh = new Mesh();
-  
-        int vertexCount = (toX - fromX) * tilemapCircle.Height * 4;
-        int triangleCount = (toX - fromX) * tilemapCircle.Height * 6;
-  
-        if (vertices == null || vertices.Length != vertexCount)
-            vertices = new Vector3[vertexCount];
-
-        if (colors == null || colors.Length != vertexCount)
-            colors = new Color32[vertexCount];
-
-        if (uvs == null || uvs.Length != vertexCount)
-            uvs = new Vector2[vertexCount];
-
-        if (triangles == null || triangles.Length != triangleCount)
-            triangles = new int[triangleCount];
+        
+        meshFilter = GetComponent<MeshFilter>();
     }
 
     public void SetDirty()
@@ -80,15 +65,16 @@ public class TilemapCircleViewRenderer : MonoBehaviour
         int triangleOffset = 0;
 
         Vector3 p1, p2, p3, p4;
-  
-        /*
-        float tx = 1.0f / 16.0f;
-        float ty = 1.0f / 16.0f;
-        float tt = 1.0f / 256.0f;
-        */
-        
+          
         int height = tilemapCircleView.TilemapCircle.Height;
         int width = tilemapCircleView.TilemapCircle.Width;
+        
+        int vertexCount = (toX - fromX) * tilemapCircle.Height * 4;
+        int triangleCount = (toX - fromX) * tilemapCircle.Height * 6;
+        
+        Vector3[] vertices = DataPools.poolVector3.GetArray(vertexCount);
+        Color32[] colors = DataPools.poolColor32.GetArray(vertexCount);
+        Vector2[] uvs = DataPools.poolVector2.GetArray(vertexCount);
 
         for (int y = 0; y < height; y++)
         {
@@ -117,30 +103,21 @@ public class TilemapCircleViewRenderer : MonoBehaviour
                 vertices[vertexOffset + 1] = p2;
                 vertices[vertexOffset + 2] = p3;
                 vertices[vertexOffset + 3] = p4;
-
-                if (tilemapCircleView.debugColor)
-                {
-                    colors[vertexOffset + 0] = Color.red;
-                    colors[vertexOffset + 1] = Color.green;
-                    colors[vertexOffset + 2] = Color.blue;
-                    colors[vertexOffset + 3] = Color.cyan;
-                }
-                else
-                {
+    
+                //if (tilemapCircleView.debugColor)
+                //{
+                //    colors[vertexOffset + 0] = Color.red;
+                //    colors[vertexOffset + 1] = Color.green;
+                //    colors[vertexOffset + 2] = Color.blue;
+                //    colors[vertexOffset + 3] = Color.cyan;
+                //}
+                //else
+                //{
                     colors[vertexOffset + 0] = Color.white;
                     colors[vertexOffset + 1] = Color.white;
                     colors[vertexOffset + 2] = Color.white;
                     colors[vertexOffset + 3] = Color.white;
-                    
-                    /*
-                    Color32 color = colorsPerTile[tile];
-
-                    colors[vertexOffset + 0] = color;
-                    colors[vertexOffset + 1] = color;
-                    colors[vertexOffset + 2] = color;
-                    colors[vertexOffset + 3] = color;
-                    */
-                }
+                //}
                 
                 TileSubtype subtype;
                 
@@ -161,17 +138,6 @@ public class TilemapCircleViewRenderer : MonoBehaviour
                 uvs[vertexOffset + 3].x = subtype.uvFromX;
                 uvs[vertexOffset + 3].y = subtype.uvFromY;
 
-                if (firstTime)
-                {
-                    triangles[triangleOffset + 0] = vertexOffset + 0;
-                    triangles[triangleOffset + 1] = vertexOffset + 1;
-                    triangles[triangleOffset + 2] = vertexOffset + 2;
-
-                    triangles[triangleOffset + 3] = vertexOffset + 2;
-                    triangles[triangleOffset + 4] = vertexOffset + 3;
-                    triangles[triangleOffset + 5] = vertexOffset + 0;
-                }
-
                 vertexOffset += 4;
                 triangleOffset += 6;
             }
@@ -179,14 +145,41 @@ public class TilemapCircleViewRenderer : MonoBehaviour
 
         mesh.vertices = vertices;
         mesh.uv = uvs;
+        mesh.colors32 = colors;
 
         if (firstTime)
         {
+            int[] triangles = DataPools.poolInt.GetArray(triangleCount);
+        
+            int size = height * (toX - fromX);
+            
+            vertexOffset = 0;
+            triangleOffset = 0;
+            
+            for (int i = 0; i < size; i++)
+            {
+                triangles[triangleOffset + 0] = vertexOffset + 0;
+                triangles[triangleOffset + 1] = vertexOffset + 1;
+                triangles[triangleOffset + 2] = vertexOffset + 2;
+
+                triangles[triangleOffset + 3] = vertexOffset + 2;
+                triangles[triangleOffset + 4] = vertexOffset + 3;
+                triangles[triangleOffset + 5] = vertexOffset + 0;
+                
+                triangleOffset += 6;
+                vertexOffset += 4;
+            }
+            
             mesh.triangles = triangles;
-            mesh.colors32 = colors;
+            
+            DataPools.poolInt.ReturnArray(triangles);
         }
 
-        GetComponent<MeshFilter>().sharedMesh = mesh;
+        meshFilter.sharedMesh = mesh;
+        
+        DataPools.poolColor32.ReturnArray(colors);
+        DataPools.poolVector3.ReturnArray(vertices);
+        DataPools.poolVector2.ReturnArray(uvs);
 
         firstTime = false;
     }

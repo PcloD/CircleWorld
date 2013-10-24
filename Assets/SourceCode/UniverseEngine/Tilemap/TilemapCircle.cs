@@ -78,7 +78,7 @@ namespace UniverseEngine
             this.seed = seed;
             this.height = height;
             
-            UpdateData();
+            InitData();
             
             UpdateTiles();
         }
@@ -88,18 +88,13 @@ namespace UniverseEngine
             //TODO: Override!
         }
     
-        private void UpdateData()
+        private void InitData()
         {
             width = (((int)((float)height * Mathf.PI * 2.0f)) / 4) * 4;
     
-            if (circleNormals == null || circleNormals.Length != width)
-                circleNormals = new Vector2[width];
-    
-            if (circleHeights == null || circleHeights.Length != height + 1)
-                circleHeights = new float[height + 1];
-    
-            if (tiles == null || tiles.Length != width * height)
-                tiles = new byte[width * height];
+            circleNormals = DataPools.poolVector2.GetArray(width);
+            circleHeights = DataPools.poolFloat.GetArray(height + 1);
+            tiles = DataPools.poolByte.GetArray(width * height);
             
             float angleStep = ((2.0f * Mathf.PI) / width);
     
@@ -570,6 +565,15 @@ namespace UniverseEngine
         
         public virtual void Recycle()
         {
+            DataPools.poolVector2.ReturnArray(circleNormals);
+            circleNormals = null;
+            
+            DataPools.poolFloat.ReturnArray(circleHeights);
+            circleHeights = null;
+            
+            DataPools.poolByte.ReturnArray(tiles);
+            tiles = null;
+            
             listener = null;
         }
     }

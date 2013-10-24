@@ -1,4 +1,4 @@
-﻿//#define ENABLE_PERFORMANCE
+﻿#define ENABLE_PERFORMANCE
 
 using UnityEngine;
 using System.Collections;

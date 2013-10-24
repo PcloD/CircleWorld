@@ -37,7 +37,7 @@ public class TilemapCircleView : MonoBehaviour, ITilemapCircleListener
         
         UpdatePosition();
         
-        UpdateRenderers();
+        InitRenderers();
         
         UpdateMesh();
     }
@@ -48,23 +48,11 @@ public class TilemapCircleView : MonoBehaviour, ITilemapCircleListener
             renderers[i].UpdateMesh();
     }
 
-    private void UpdateRenderers()
+    private void InitRenderers()
     {
         int renderersAmount = Mathf.Clamp(Mathf.CeilToInt((tilemapCircle.Width * tilemapCircle.Height) / (32 * 32)), 1, 256);
 
-        bool recreate = false;
-
-        if (Application.isEditor && !Application.isPlaying)
-        {
-            if (renderers != null)
-            {
-                foreach (TilemapCircleViewRenderer rend in renderers)
-                    if (!rend)
-                        recreate = true;
-            }
-        }
-
-        if (renderers == null || renderers.Length != renderersAmount || recreate || lastWidth != tilemapCircle.Width || lastHeight != tilemapCircle.Height)
+        if (renderers == null || renderers.Length != renderersAmount || lastWidth != tilemapCircle.Width || lastHeight != tilemapCircle.Height)
         {
             if (renderers != null)
             {
