@@ -10,8 +10,8 @@ Shader "Universe/FixedPipeline/Vertex Color"
 
 	SubShader {
         Lighting Off
-	 	ZWrite Off
-	 	ZTest off
+	 	//ZWrite Off
+	 	//ZTest off
 	 	
 	    Pass {
 	        //Material {

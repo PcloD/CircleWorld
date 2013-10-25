@@ -4,8 +4,6 @@ using System.Collections.Generic;
 
 public class TilemapCircleViewRenderer : MonoBehaviour
 {
-    public Mesh mesh;
-
     private bool dirty;
 
     private int fromX;
@@ -18,15 +16,24 @@ public class TilemapCircleViewRenderer : MonoBehaviour
 
     private bool firstTime;
     
+    private Mesh mesh;
     private MeshFilter meshFilter;
+    private MeshRenderer meshRenderer;
     
     static private TileType[] tileTypes;
     
-    public void Init(TilemapCircleView tilemapCircleView, int fromX, int toX)
+    public void Awake()
     {
+        meshRenderer = gameObject.AddComponent<MeshRenderer>();
+        meshFilter = gameObject.AddComponent<MeshFilter>();
+        mesh = new Mesh();
+        
         if (tileTypes == null)
             tileTypes = TileTypes.GetTileTypes();
-        
+    }
+    
+    public void Init(TilemapCircleView tilemapCircleView, int fromX, int toX)
+    {
         dirty = true;
         firstTime = true;
 
@@ -36,17 +43,9 @@ public class TilemapCircleViewRenderer : MonoBehaviour
         this.toX = toX;
         this.circleNormals = tilemapCircle.CircleNormals;
         this.circleHeights = tilemapCircle.CircleHeights;
-
-        if (!GetComponent<MeshRenderer>())
-            gameObject.AddComponent<MeshRenderer>();
-
-        if (!GetComponent<MeshFilter>())
-            gameObject.AddComponent<MeshFilter>();
-
-        if (mesh == null) 
-            mesh = new Mesh();
         
-        meshFilter = GetComponent<MeshFilter>();
+        meshRenderer.sharedMaterial = tilemapCircleView.material;
+
     }
 
     public void SetDirty()

@@ -1,5 +1,6 @@
 using System;
 using SpriteMeshEngine;
+using UnityEngine;
 
 namespace UniverseEngine
 {
@@ -10,6 +11,9 @@ namespace UniverseEngine
         public byte mainTileId;
         
         public Sprite planetSprite;
+        
+        public Color32 backColorFrom;
+        public Color32 backColorTo;
     }
 }
 

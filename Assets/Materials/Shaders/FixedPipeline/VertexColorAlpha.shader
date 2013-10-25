@@ -12,8 +12,8 @@ Shader "Universe/FixedPipeline/Vertex Color Alpha"
 	 	Tags {"Queue"="Transparent" "IgnoreProjector"="True" "RenderType"="Transparent"}
         Blend SrcAlpha OneMinusSrcAlpha
         Lighting Off
-	 	ZWrite Off
-	 	ZTest off
+	 	//ZWrite Off
+	 	//ZTest Off
 	 	
 	    Pass {
 	        //Material {

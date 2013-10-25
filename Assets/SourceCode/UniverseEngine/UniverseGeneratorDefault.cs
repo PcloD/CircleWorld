@@ -8,7 +8,7 @@ namespace UniverseEngine
         {
             int galaxyOrbits = random.Next(10, 20);
 
-            ushort galaxySafeRadius = (ushort) (things[currentThing].safeRadius / 8);
+            ushort galaxySafeRadius = (ushort) (things[currentThing].safeRadius / 6);
             ushort solarSystemRadius = (ushort) (galaxySafeRadius / (galaxyOrbits * 2));
 
             for (int i = 0; i < galaxyOrbits; i++)

@@ -21,13 +21,19 @@ namespace UniverseEngine
             set { this.gravity = value; }
         }
         
+        public PlanetType PlanetType
+        {
+            get 
+            { 
+                return PlanetTypes.GetPlanetType((byte) (Math.Abs(Seed % 4)));
+            }
+        }
+        
         protected override void UpdateTiles ()
         {
             //System.Random random = new System.Random(Seed);
             
-            PlanetType planetType = PlanetTypes.GetPlanetType((byte) (Math.Abs(Seed % 4)));
-            
-            byte tileId = planetType.mainTileId;
+            byte tileId = PlanetType.mainTileId;
             
             for (int i = 0; i < tiles.Length; i++)
             {

@@ -8,8 +8,8 @@ Shader "Universe/CG/Texture Only Alpha"
         Tags {"Queue"="Transparent" "IgnoreProjector"="True" "RenderType"="Transparent"}
         Blend SrcAlpha OneMinusSrcAlpha
         Lighting Off
-        ZWrite Off
-        ZTest Off
+        //ZWrite Off
+        //ZTest Off
         
         Pass {
             CGPROGRAM

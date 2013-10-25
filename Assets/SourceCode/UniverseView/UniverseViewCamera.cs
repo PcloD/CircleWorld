@@ -10,6 +10,10 @@ public class UniverseViewCamera : MonoBehaviour
     public float cameraDistance = 10;
     public float zoomSpeed = 10;
     public float scale = 1.0f;
+    
+    public float minCameraDistance = 4;
+    public float maxCameraDistance = 4000;
+    
 
     private Camera cam;
     private Transform trans;
@@ -151,6 +155,8 @@ public class UniverseViewCamera : MonoBehaviour
             float zoom = Input.GetAxis("Mouse ScrollWheel");
             cameraDistance -= cameraDistance * zoom * zoomSpeed * Time.deltaTime;
         }
+        
+        cameraDistance = Mathf.Clamp(cameraDistance, minCameraDistance, maxCameraDistance);  
 
         cam.orthographicSize = cameraDistance * scale;
     }

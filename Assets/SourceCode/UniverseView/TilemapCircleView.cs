@@ -6,9 +6,12 @@ public class TilemapCircleView : MonoBehaviour, ITilemapCircleListener
 {
     public bool debugColor;
     public Material material;
+    public Material backgroundMaterial;
     
     private int lastHeight;
     private int lastWidth;
+    
+    private TilemapCircleViewBackgroundRenderer backgroundRenderer;
 
     private TilemapCircleViewRenderer[] renderers;
 
@@ -54,20 +57,16 @@ public class TilemapCircleView : MonoBehaviour, ITilemapCircleListener
 
         if (renderers == null || renderers.Length != renderersAmount || lastWidth != tilemapCircle.Width || lastHeight != tilemapCircle.Height)
         {
+            //Destroy existing renderers
             if (renderers != null)
-            {
                 foreach (TilemapCircleViewRenderer rend in renderers)
-                {
                     if (rend)
-                    {
-                        if (Application.isPlaying)
-                            GameObject.Destroy(rend.gameObject);
-                        else
-                            GameObject.DestroyImmediate(rend.gameObject);
-                    }
-                }
-            }
-
+                        GameObject.Destroy(rend.gameObject);
+            
+            if (backgroundRenderer)
+                GameObject.Destroy(backgroundRenderer.gameObject);
+   
+            //Add tile map circle renderers
             renderers = new TilemapCircleViewRenderer[renderersAmount];
 
             lastWidth = tilemapCircle.Width;
@@ -81,15 +80,12 @@ public class TilemapCircleView : MonoBehaviour, ITilemapCircleListener
             for (int i = 0; i < renderers.Length; i++)
             {
                 GameObject go = new GameObject("Renderer " + i);
-                go.hideFlags = HideFlags.DontSave;
                 go.transform.parent = transform;
                 go.transform.localPosition = Vector3.zero;
                 go.transform.localRotation = Quaternion.identity;
                 go.transform.localScale = Vector3.one;
-                go.AddComponent<MeshRenderer>().sharedMaterial = material;
-
+                
                 renderers[i] = go.AddComponent<TilemapCircleViewRenderer>();
-
                 renderers[i].Init(
                     this, 
                     fromX,
@@ -104,7 +100,18 @@ public class TilemapCircleView : MonoBehaviour, ITilemapCircleListener
                 if (fromX > toX)
                     fromX = toX;
             }
+            
+            //Add background renderer
+            GameObject goBack = new GameObject("BackRenderer");
+            goBack.transform.parent = transform;
+            goBack.transform.localPosition = Vector3.zero;
+            goBack.transform.localRotation = Quaternion.identity;
+            goBack.transform.localScale = Vector3.one;
+            
+            backgroundRenderer = goBack.AddComponent<TilemapCircleViewBackgroundRenderer>();
         }
+        
+        backgroundRenderer.Init(this);
 
         for (int i = 0; i < renderers.Length; i++)
             renderers[i].SetDirty();

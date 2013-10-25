@@ -6,8 +6,8 @@ Shader "Universe/CG/Vertex Color"
     
     SubShader {
         Lighting Off
-        ZWrite Off
-        ZTest Off
+        //ZWrite Off
+        //ZTest Off
         
         Pass {
             CGPROGRAM
