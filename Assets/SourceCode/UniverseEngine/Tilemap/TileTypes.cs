@@ -38,6 +38,12 @@ namespace UniverseEngine
 
             tileTypes[4].center = GetTileSubtypeUV("stoneCenter");
             tileTypes[4].top = GetTileSubtypeUV("stoneMid");
+            
+            tileTypes[5].center = GetTileSubtypeUV("sun1Center");
+            tileTypes[5].top = GetTileSubtypeUV("sun1Mid");
+            
+            tileTypes[6].center = GetTileSubtypeUV("sun2Center");
+            tileTypes[6].top = GetTileSubtypeUV("sun2Mid");
         }
         
         static private TileSubtype GetTileSubtypeUV(string id)

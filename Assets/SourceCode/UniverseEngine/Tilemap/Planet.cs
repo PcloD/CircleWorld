@@ -25,7 +25,10 @@ namespace UniverseEngine
         {
             get 
             { 
-                return PlanetTypes.GetPlanetType((byte) (Math.Abs(Seed % 4)));
+                if (universe.GetThing(thingIndex).type == (ushort) ThingType.Sun)
+                    return PlanetTypes.GetPlanetType((byte) (Math.Abs(Seed % 2) + 4)); //suns!
+                else
+                    return PlanetTypes.GetPlanetType((byte) (Math.Abs(Seed % 4))); //planets!
             }
         }
         

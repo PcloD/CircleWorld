@@ -53,6 +53,18 @@ namespace UniverseEngine
             planetTypes[3].mainTileId = 4;
             planetTypes[3].backColorFrom = new Color32(153, 50, 204, 255);
             planetTypes[3].backColorTo = new Color32(153, 50, 204, 0);
+            
+            planetTypes[4].planetSprite = planetsSpriteSheet.GetSprite("sun-1");
+            planetTypes[4].mainTileId = 5;
+            planetTypes[4].backColorFrom = Color.yellow;
+            planetTypes[4].backColorTo = Color.yellow;
+            planetTypes[4].backColorTo.a = 0;
+            
+            planetTypes[5].planetSprite = planetsSpriteSheet.GetSprite("sun-2");
+            planetTypes[5].mainTileId = 6;
+            planetTypes[5].backColorFrom = Color.red;
+            planetTypes[5].backColorTo = Color.red;
+            planetTypes[5].backColorTo.a = 0;
         }
     }
 }

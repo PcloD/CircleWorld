@@ -238,7 +238,12 @@ public class UniverseView : MonoBehaviour, IUniverseListener
             {
                 Thing thing = things[thingsToRender[i]];
                 
-                PlanetType planetType = planetTypes[(byte) (Mathf.Abs(thing.seed % 4))];
+                PlanetType planetType;
+                
+                if (thing.type == (ushort) ThingType.Sun)
+                    planetType = planetTypes[Mathf.Abs(thing.seed % 2) + 4]; //suns!
+                else
+                    planetType = planetTypes[Mathf.Abs(thing.seed % 4)]; //planets!
     
                 Rect planetUV = planetType.planetSprite.UV;
                 
