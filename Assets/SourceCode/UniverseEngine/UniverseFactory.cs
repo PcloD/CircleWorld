@@ -12,6 +12,11 @@ namespace UniverseEngine
             return new Avatar();
         }
         
+        public Ship GetShip()
+        {
+            return new Ship();
+        }
+        
         public Planet GetPlanet(int height)
         {
             Planet planet = null;

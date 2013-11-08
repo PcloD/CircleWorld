@@ -34,6 +34,8 @@ namespace UniverseEngine
         
         private Avatar avatar;
         
+        private Ship ship;
+        
         private IUniverseListener listener;
         
         public ushort StartingPlanet
@@ -44,6 +46,11 @@ namespace UniverseEngine
         public Avatar Avatar
         {
             get { return avatar; }
+        }
+        
+        public Ship Ship
+        {
+            get { return ship; }
         }
         
         public Thing[] Things
@@ -87,6 +94,8 @@ namespace UniverseEngine
             UpdateUniverse(0);
             
             AddAvatar();
+            
+            AddShip();
         }
 
         private void UpdateThingsToRender()
@@ -252,6 +261,18 @@ namespace UniverseEngine
             
             AddUniverseObject(avatar);
         }
+
+        private void AddShip()
+        {
+            ship = universeFactory.GetShip();
+            ship.Init(
+                new Vector2(1.0f, 1.0f),
+                null,
+                avatar.parent.GetPositionFromTileCoordinate(0, avatar.parent.Height + 5)
+            );
+            
+            AddUniverseObject(ship);
+        }   
         
         public void AddUniverseObject(UniverseObject universeObject)
         {

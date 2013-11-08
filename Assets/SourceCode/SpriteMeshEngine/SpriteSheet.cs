@@ -86,7 +86,10 @@ namespace SpriteMeshEngine
             
             if (defaultMaterial)
             {
-                Object.Destroy(defaultMaterial);
+                if (Application.isEditor && !Application.isPlaying)
+                    Object.DestroyImmediate(defaultMaterial);
+                else
+                    Object.Destroy(defaultMaterial);
                 defaultMaterial = null;
             }
         }

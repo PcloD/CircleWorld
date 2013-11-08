@@ -26,10 +26,7 @@ public class AvatarInput : MonoBehaviour
     
     static public AvatarInputMode mode = AvatarInputMode.Move;
     static public AvatarInputEditTool editTool = AvatarInputEditTool.None;
-    
-    static private Rect[] inputAreas = new Rect[10];
-    static private int inputAreasCount;
-    
+        
     static private string[] EditToolNames = new string[] {
         "None",
         "Add Tiles",
@@ -124,12 +121,12 @@ public class AvatarInput : MonoBehaviour
         
         if (Application.platform == RuntimePlatform.Android || Application.platform == RuntimePlatform.IPhonePlayer)
         {
-            if (Input.touchCount == 1 && !IsInputArea(Input.GetTouch(0).position))
+            if (Input.touchCount == 1 && !InputAreas.IsInputArea(Input.GetTouch(0).position))
                 modifyTile = GetTileCoordinatesUnderTouch(out tileX, out tileY);
         }
         else
         {
-            if (Input.GetMouseButton(0) && !IsInputArea(Input.mousePosition))
+            if (Input.GetMouseButton(0) && !InputAreas.IsInputArea(Input.mousePosition))
                 modifyTile = GetTileCoordinatesUnderMouse(out tileX, out tileY);
         }
         
@@ -171,31 +168,12 @@ public class AvatarInput : MonoBehaviour
         return avatarView.ParentView.TilemapCircle.GetTileCoordinatesFromPosition(worldPos, out tileX, out tileY);
     }    
     
-    static public bool IsInputArea(Vector2 inputPosition)
-    {
-        //Convert from Input coordinate system to GUI coordinate system
-        inputPosition.y = Screen.height - inputPosition.y;
-        
-        for (int i = 0; i < inputAreasCount; i++)
-            if (inputAreas[i].Contains(inputPosition))
-                return true;
-        
-        return false;
-    }
-    
-    static public void ResetInputAreas()
-    {
-        inputAreasCount = 0;
-    }
-    
-    static public void AddInputArea(Rect rect)
-    {
-        inputAreas[inputAreasCount++] = rect;
-    }
-
 #if ENABLE_ONGUI
     public void OnGUI()
     {
+        if (GameLogic.Instace.State != GameLogicState.PlayingAvatar)
+            return;
+        
         if (centeredLabelStyle == null)
         {
             centeredLabelStyle = new GUIStyle(GUI.skin.label);
@@ -205,7 +183,7 @@ public class AvatarInput : MonoBehaviour
             centeredBoxStyle.alignment = TextAnchor.MiddleCenter;
         }
         
-        ResetInputAreas();
+        InputAreas.ResetInputAreas();
         
         switch(mode)
         {
@@ -226,12 +204,12 @@ public class AvatarInput : MonoBehaviour
     private void DrawEditGUI()
     {
         //Draw toolbar
-        AddInputArea(new Rect(0, Screen.height - Screen.height * 0.25f, Screen.width, Screen.height * 0.25f));
+        InputAreas.AddInputArea(new Rect(0, Screen.height - Screen.height * 0.25f, Screen.width, Screen.height * 0.25f));
         editTool = (AvatarInputEditTool) GUI.Toolbar(new Rect(0, Screen.height - Screen.height * 0.25f, Screen.width, Screen.height * 0.25f - 50), (int) editTool, EditToolNames);
         GUI.Box(new Rect(0, Screen.height - 50, Screen.width, 50), EditToolTooltips[(int) editTool], centeredBoxStyle);
         
         //Draw cancel button
-        AddInputArea(new Rect(Screen.width - Screen.width / 8, 0, Screen.width / 8, Screen.height / 8));
+        InputAreas.AddInputArea(new Rect(Screen.width - Screen.width / 8, 0, Screen.width / 8, Screen.height / 8));
         if (GUI.Button(new Rect(Screen.width - Screen.width / 8, 0, Screen.width / 8, Screen.height / 8), "EXIT\nEDIT"))
             mode = AvatarInputMode.Move;
     }
@@ -239,9 +217,11 @@ public class AvatarInput : MonoBehaviour
     private void DrawTravelToPlanetGUI()
     {
         //Draw cancel button
-        AddInputArea(new Rect(Screen.width - Screen.width / 8, 0, Screen.width / 8, Screen.height / 8));
+        InputAreas.AddInputArea(new Rect(Screen.width - Screen.width / 8, 0, Screen.width / 8, Screen.height / 8));
         if (GUI.Button(new Rect(Screen.width - Screen.width / 8, 0, Screen.width / 8, Screen.height / 8), "EXIT\nTRAVEL"))
             mode = AvatarInputMode.Move;
+        
+        GUI.Box(new Rect(0, Screen.height - 50, Screen.width, 50), "Tap on a planet to travel", centeredBoxStyle);
     }
     
     private void DrawMoveGUI()
@@ -249,7 +229,7 @@ public class AvatarInput : MonoBehaviour
         //Draw movement keys
         if (Application.platform == RuntimePlatform.Android || Application.platform == RuntimePlatform.IPhonePlayer)
         {
-            AddInputArea(new Rect(0, Screen.height - Screen.height * 0.25f, Screen.width, Screen.height * 0.25f));
+            InputAreas.AddInputArea(new Rect(0, Screen.height - Screen.height * 0.25f, Screen.width, Screen.height * 0.25f));
             
             GUI.Button(new Rect(0, Screen.height - Screen.height * 0.25f, Screen.width / 4, Screen.height * 0.25f), "Left");
             
@@ -259,17 +239,22 @@ public class AvatarInput : MonoBehaviour
         }
         
         //Draw travel button
-        AddInputArea(new Rect(Screen.width - (Screen.width / 8) * 2.0f, 0, Screen.width / 8, Screen.height / 8));
+        InputAreas.AddInputArea(new Rect(Screen.width - (Screen.width / 8) * 2.0f, 0, Screen.width / 8, Screen.height / 8));
         if (GUI.Button(new Rect(Screen.width - (Screen.width / 8) * 2.0f, 0, Screen.width / 8, Screen.height / 8), "TRAVEL"))
             mode = AvatarInputMode.TravelToPlanet;
         
         //Draw edit button
-        AddInputArea(new Rect(Screen.width - Screen.width / 8, 0, Screen.width / 8, Screen.height / 8));
+        InputAreas.AddInputArea(new Rect(Screen.width - Screen.width / 8, 0, Screen.width / 8, Screen.height / 8));
         if (GUI.Button(new Rect(Screen.width - Screen.width / 8, 0, Screen.width / 8, Screen.height / 8), "EDIT"))
         {
             mode = AvatarInputMode.Edit;
             editTool = AvatarInputEditTool.None;
         }    
+        
+        //Draw switch to ship button
+        InputAreas.AddInputArea(new Rect(Screen.width - (Screen.width / 8) * 3.0f, 0, Screen.width / 8, Screen.height / 8));
+        if (GUI.Button(new Rect(Screen.width - (Screen.width / 8) * 3.0f, 0, Screen.width / 8, Screen.height / 8), "TO SHIP"))
+            GameLogic.Instace.SwitchToShip();
     }
 #endif
 

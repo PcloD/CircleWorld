@@ -59,7 +59,10 @@ namespace UniverseEngine
         {
             //TODO: Remove once planet rotations are correctly implemented
             rotationPeriod = 0;
-
+            
+            //TEST
+            //orbitalPeriod = 0;
+            
             things[currentThing].childs++;
 
             things[thingsAmount].parent = currentThing;

@@ -14,7 +14,9 @@ namespace UniverseEngine
         protected float rotation; //radians
         
         protected Vector2 size = new Vector2(1, 1);
+        
         protected Vector2 velocity;
+        protected float rotationVelocity;
     
         protected TileHitFlags hitFlags;
         
@@ -71,11 +73,20 @@ namespace UniverseEngine
         {
             this.parent = parent;
             this.position = position;
-            this.scale = parent.GetScaleFromPosition(position);
-            this.rotation = parent.GetAngleFromPosition(position);
             
-            distanceInTilemapCircle = parent.GetDistanceFromPosition(position);
-            angleInTilemapCirclePosition = parent.GetAngleFromPosition(position);
+            if (parent != null)
+            {
+                this.scale = parent.GetScaleFromPosition(position);
+                this.rotation = parent.GetAngleFromPosition(position);
+                
+                distanceInTilemapCircle = parent.GetDistanceFromPosition(position);
+                angleInTilemapCirclePosition = parent.GetAngleFromPosition(position);
+            }
+            else
+            {
+                this.scale = 1.0f;
+                this.rotation = 0.0f;
+            }
             
             if (listener != null)
                 listener.OnParentChanged(parent);
@@ -91,105 +102,135 @@ namespace UniverseEngine
         
         protected void UpdatePosition(float deltaTime)
         {
+            Vector2 normal;
+            Vector2 tangent;
+            
+            Vector2 deltaPosition;
+            float deltaRotation;
+                
             if (parent != null)
             {
                 position = parent.GetPositionFromDistanceAndAngle(distanceInTilemapCircle, angleInTilemapCirclePosition);
                 rotation = parent.GetAngleFromPosition(position);
+                
+                scale = parent.GetScaleFromPosition(position);
+                
+                if (parent is Planet && useGravity)
+                    velocity.y -= ((Planet) parent).Gravity * deltaTime;
+                
+                normal = parent.GetNormalFromPosition(position); //doesn't change with vertical position
+                tangent = parent.GetTangentFromPosition(position); //doesn't change with vertical position
+                
+                deltaPosition = velocity * deltaTime * scale;
+                deltaRotation = 0.0f;
+            }
+            else
+            {
+                normal = Vector2.up;
+                tangent = Vector2.right;
+                
+                deltaPosition = velocity * deltaTime;
+                deltaRotation = rotationVelocity * deltaTime;
             }
             
-            scale = parent.GetScaleFromPosition(position);
-            Vector2 normal = parent.GetNormalFromPosition(position); //doesn't change with vertical position
-            Vector2 tangent = parent.GetTangentFromPosition(position); //doesn't change with vertical position
-    
-            if (parent is Planet && useGravity)
-                velocity.y -= ((Planet) parent).Gravity * deltaTime;
-    
-            Vector2 delta = velocity * deltaTime * scale;
-    
-            TileHitInfo hitInfo;
-    
             hitFlags = TileHitFlags.None;
-    
-            if (delta.y > 0)
-            {
-                //Check against ceiling
-                if (parent.RaycastSquare(
-                    position + normal * (size.y * 0.5f * scale), 
-                    size.x * scale,
-                    TileDirection.Up, 
-                    delta.y + (size.y * 0.5f * scale), 
-                    out hitInfo))
-                {
-                    delta.y = -(hitInfo.hitDistance - (size.y * 0.5f * scale));
-                    velocity.y = 0.0f;
-                    hitFlags |= TileHitFlags.Up;
-                }
-            }
-            else if (delta.y < 0)
-            {
-                //Check against floor
-                if (parent.RaycastSquare(
-                    position + normal * (size.y * 0.5f * scale), 
-                    size.x * scale,
-                    TileDirection.Down, 
-                    -delta.y + (size.y * 0.5f * scale), 
-                    out hitInfo))
-                {
-                    delta.y = -(hitInfo.hitDistance - (size.y * 0.5f * scale));
-                    velocity.y = 0.0f;
-                    hitFlags |= TileHitFlags.Down;
-                }
-            }
-    
-            if (delta.y != 0)
-            {
-                position += normal * delta.y;
-                scale = parent.GetScaleFromPosition(position);
-            }
-    
-            if (delta.x > 0)
-            {
-                //Check against right wall
-                if (parent.RaycastSquare(
-                    position + normal * (size.y * 0.5f * scale), 
-                    size.y * scale,
-                    TileDirection.Right, 
-                    delta.x + (size.x * 0.5f * scale), 
-                    out hitInfo))
-                {
-                    delta.x = (hitInfo.hitDistance - (size.x * 0.5f * scale));
-                    velocity.x = 0.0f;
-                    hitFlags |= TileHitFlags.Right;
-                }
-            }
-            else if (delta.x < 0)
-            {
-                //Check against left wall
-                if (parent.RaycastSquare(
-                    position + normal * (size.y * 0.5f * scale), 
-                    size.y * scale,
-                    TileDirection.Left, 
-                    -delta.x + (size.x * 0.5f * scale), 
-                    out hitInfo))
-                {
-                    delta.x = -(hitInfo.hitDistance - (size.x * 0.5f * scale));
-                    velocity.x = 0.0f;
-                    hitFlags |= TileHitFlags.Left;
-                }
-            }
-    
-            if (delta.x != 0)
-            {
-                position += tangent * delta.x;
-                normal = parent.GetNormalFromPosition(position);
-            }
-    
-            rotation = parent.GetAngleFromPosition(position);
             
             if (parent != null)
             {
+                TileHitInfo hitInfo;
+        
+                if (deltaPosition.y > 0)
+                {
+                    //Check against ceiling
+                    if (parent.RaycastSquare(
+                        position + normal * (size.y * 0.5f * scale), 
+                        size.x * scale,
+                        TileDirection.Up, 
+                        deltaPosition.y + (size.y * 0.5f * scale), 
+                        out hitInfo))
+                    {
+                        deltaPosition.y = -(hitInfo.hitDistance - (size.y * 0.5f * scale));
+                        velocity.y = 0.0f;
+                        hitFlags |= TileHitFlags.Up;
+                    }
+                }
+                else if (deltaPosition.y < 0)
+                {
+                    //Check against floor
+                    if (parent.RaycastSquare(
+                        position + normal * (size.y * 0.5f * scale), 
+                        size.x * scale,
+                        TileDirection.Down, 
+                        -deltaPosition.y + (size.y * 0.5f * scale), 
+                        out hitInfo))
+                    {
+                        deltaPosition.y = -(hitInfo.hitDistance - (size.y * 0.5f * scale));
+                        velocity.y = 0.0f;
+                        hitFlags |= TileHitFlags.Down;
+                    }
+                }
+            }
+    
+            if (deltaPosition.y != 0)
+            {
+                position += normal * deltaPosition.y;
+                if (parent != null)
+                    scale = parent.GetScaleFromPosition(position);
+            }
+            
+            if (parent != null)
+            {
+                TileHitInfo hitInfo;
+                
+                if (deltaPosition.x > 0)
+                {
+                    //Check against right wall
+                    if (parent.RaycastSquare(
+                        position + normal * (size.y * 0.5f * scale), 
+                        size.y * scale,
+                        TileDirection.Right, 
+                        deltaPosition.x + (size.x * 0.5f * scale), 
+                        out hitInfo))
+                    {
+                        deltaPosition.x = (hitInfo.hitDistance - (size.x * 0.5f * scale));
+                        velocity.x = 0.0f;
+                        hitFlags |= TileHitFlags.Right;
+                    }
+                }
+                else if (deltaPosition.x < 0)
+                {
+                    //Check against left wall
+                    if (parent.RaycastSquare(
+                        position + normal * (size.y * 0.5f * scale), 
+                        size.y * scale,
+                        TileDirection.Left, 
+                        -deltaPosition.x + (size.x * 0.5f * scale), 
+                        out hitInfo))
+                    {
+                        deltaPosition.x = -(hitInfo.hitDistance - (size.x * 0.5f * scale));
+                        velocity.x = 0.0f;
+                        hitFlags |= TileHitFlags.Left;
+                    }
+                }
+            }
+    
+            if (deltaPosition.x != 0)
+            {
+                position += tangent * deltaPosition.x;
+                if (parent != null)
+                    normal = parent.GetNormalFromPosition(position);
+            }
+    
+            if (parent != null)
+            {
+                rotation = parent.GetAngleFromPosition(position);
+                
                 distanceInTilemapCircle = parent.GetDistanceFromPosition(position);
                 angleInTilemapCirclePosition = parent.GetAngleFromPosition(position);
+            }
+            else
+            {
+                rotation += deltaRotation;
             }
         }
      

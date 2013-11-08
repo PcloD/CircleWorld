@@ -12,6 +12,10 @@ public class UniverseView : MonoBehaviour, IUniverseListener
     [System.NonSerialized]
     public AvatarView avatarView;
 
+    [HideInInspector]
+    [System.NonSerialized]
+    public ShipView shipView;
+    
     private Universe universe = new Universe();
     
     private PlanetView[] planetViews = new PlanetView[Universe.MAX_THINGS];
@@ -128,9 +132,16 @@ public class UniverseView : MonoBehaviour, IUniverseListener
         if (universeObject is UniverseEngine.Avatar)
         {
             avatarView = universeFactory.GetAvatar();
-            avatarView.Init(universe.Avatar, this);
+            avatarView.Init((UniverseEngine.Avatar) universeObject, this);
             
             tilemapObjectViews.Add(avatarView);
+        }
+        else if (universeObject is UniverseEngine.Ship)
+        {
+            shipView = universeFactory.GetShip();
+            shipView.Init((UniverseEngine.Ship) universeObject, this);
+            
+            tilemapObjectViews.Add(shipView);
         }
     }
  

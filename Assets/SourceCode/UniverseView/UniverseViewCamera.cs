@@ -28,13 +28,32 @@ public class UniverseViewCamera : MonoBehaviour
     private Vector3 zoomingTouchFinger1FromPosition;
     private Vector3 zoomingTouchFinger2FromPosition;
     
-    private UniverseObjectView followingObject;
-    private Vector2 followingObjectDelta;
+    private Transform followingObject;
+    private Vector2 followingObjectPositionDelta = Vector2.zero;
+    private float followingObjectScaleDelta = 0.0f;
+    private Quaternion followingObjectRotationDelta = Quaternion.identity;
     
-    public UniverseObjectView FollowingObject 
+    public Transform FollowingObject 
     {
-        get { return followingObject; }
-        set { followingObject = value; }
+        get 
+        { 
+            return followingObject; 
+        }
+        
+        set 
+        { 
+            if (followingObject != value)
+            {
+                if (followingObject != null && value != null)
+                {
+                    followingObjectPositionDelta = trans.position - value.position;
+                    followingObjectScaleDelta = scale - value.lossyScale.x;
+                    followingObjectRotationDelta = trans.rotation * Quaternion.Inverse(value.rotation);
+                }
+                
+                followingObject = value; 
+            }
+        }
     }
 
     public void Awake()
@@ -56,16 +75,32 @@ public class UniverseViewCamera : MonoBehaviour
         
         if (followingObject)
         {
-            if (AvatarInput.mode == AvatarInputMode.Move)
-                followingObjectDelta = Vector3.SmoothDamp(followingObjectDelta, Vector2.zero, ref followingObjectDeltaVelocity, 0.5f);
+            if (GameLogic.Instace.State == GameLogicState.PlayingAvatar && AvatarInput.mode == AvatarInputMode.Move ||
+                GameLogic.Instace.State == GameLogicState.PlayingShip && ShipInput.mode == ShipInputMode.Move)
+            {
+                followingObjectPositionDelta = Vector3.SmoothDamp(followingObjectPositionDelta, Vector2.zero, ref followingObjectDeltaPositionVelocity, 0.5f);
+                followingObjectScaleDelta = Mathf.SmoothDamp(followingObjectScaleDelta, 0, ref followingObjectDeltaScaleVelocity, 0.5f);
+                followingObjectRotationDelta = Quaternion.Slerp(followingObjectRotationDelta, Quaternion.identity, Time.deltaTime * 2.0f);
+            }
             
-            Vector3 newPosition = followingObject.trans.position + trans.up * followingObjectDelta.y + trans.right * followingObjectDelta.x;
+            Vector3 newPosition;
+            
+            
+            if (GameLogic.Instace.State == GameLogicState.PlayingAvatar && AvatarInput.mode == AvatarInputMode.Edit)
+            {
+                newPosition = followingObject.position + trans.up * followingObjectPositionDelta.y + trans.right * followingObjectPositionDelta.x;
+            }
+            else
+            {
+                newPosition = followingObject.position + (Vector3) followingObjectPositionDelta;
+            }
+            
             newPosition.z = CAMERA_Z;
             
             trans.position = newPosition;
-            trans.rotation = followingObject.trans.rotation;
+            trans.rotation = followingObject.rotation * followingObjectRotationDelta;
             
-            scale = followingObject.UniverseObject.Scale;
+            scale = followingObject.lossyScale.x + followingObjectScaleDelta;
         }
     }
     
@@ -73,22 +108,23 @@ public class UniverseViewCamera : MonoBehaviour
     //private Vector3 positionVelocity;
     //private float scaleVelocity;
     private float smoothTime;
-    private Vector3 followingObjectDeltaVelocity;
+    private Vector3 followingObjectDeltaPositionVelocity;
+    private float followingObjectDeltaScaleVelocity;
     
     //Called by GameLogic
     public bool UpdatePositionSmooth()
     {
         smoothTime += Time.deltaTime;
         
-        followingObjectDelta = Vector3.SmoothDamp(followingObjectDelta, Vector2.zero, ref followingObjectDeltaVelocity, 0.5f);
+        followingObjectPositionDelta = Vector3.SmoothDamp(followingObjectPositionDelta, Vector2.zero, ref followingObjectDeltaPositionVelocity, 0.5f);
         
         if (followingObject)
         {
-            Vector3 newPosition = followingObject.trans.position + trans.up * followingObjectDelta.y + trans.right * followingObjectDelta.x;
+            Vector3 newPosition = followingObject.position + trans.up * followingObjectPositionDelta.y + trans.right * followingObjectPositionDelta.x;
             newPosition.z = CAMERA_Z;
             
-            Quaternion newRotation = followingObject.trans.rotation;
-            float newScale = followingObject.UniverseObject.Scale;
+            Quaternion newRotation = followingObject.rotation;
+            float newScale = followingObject.lossyScale.x;
             
             //trans.position = Vector3.SmoothDamp(trans.position, newPosition, ref positionVelocity, 0.5f);
             //trans.rotation = Quaternion.RotateTowards(trans.rotation, newRotation, Time.deltaTime * 180.0f);
@@ -217,9 +253,9 @@ public class UniverseViewCamera : MonoBehaviour
                     float deltaX = Vector3.Dot(delta, trans.right);
                     float deltaY = Vector3.Dot(delta, trans.up);
                     
-                    followingObjectDelta -= new Vector2(deltaX, deltaY);
+                    followingObjectPositionDelta -= new Vector2(deltaX, deltaY);
                     
-                    Vector3 newPosition = followingObject.trans.position + trans.up * followingObjectDelta.y + trans.right * followingObjectDelta.x;
+                    Vector3 newPosition = followingObject.position + trans.up * followingObjectPositionDelta.y + trans.right * followingObjectPositionDelta.x;
                     newPosition.z = CAMERA_Z;
                     
                     trans.position = newPosition;
@@ -244,7 +280,7 @@ public class UniverseViewCamera : MonoBehaviour
         {
             if (!travelInput)
             {
-                if (Input.touchCount == 1 && Input.GetTouch(0).phase == TouchPhase.Began && !AvatarInput.IsInputArea(Input.GetTouch(0).position))
+                if (Input.touchCount == 1 && Input.GetTouch(0).phase == TouchPhase.Began && !InputAreas.IsInputArea(Input.GetTouch(0).position))
                 {
                     travelInput = true;
                     travelInputStartPosition = Input.GetTouch(0).position;
@@ -279,7 +315,7 @@ public class UniverseViewCamera : MonoBehaviour
         {
             if (!travelInput)
             {
-                if (Input.GetMouseButtonDown(0) && !AvatarInput.IsInputArea(Input.mousePosition))
+                if (Input.GetMouseButtonDown(0) && !InputAreas.IsInputArea(Input.mousePosition))
                 {
                     travelInput = true;
                     travelInputStartPosition = Input.mousePosition;
