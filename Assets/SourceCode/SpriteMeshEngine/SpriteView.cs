@@ -57,10 +57,10 @@ public class SpriteView : MonoBehaviour
         renderer.enabled = true;
 
         spriteMesh.BeginCalculateSize();
-        spriteMesh.AddSprite(sprite, 0, 0, sprite.SizeX, sprite.SizeY, Color.white);
+        spriteMesh.AddSprite(sprite, 0, -sprite.SizeY, sprite.SizeX, sprite.SizeY, Color.white);
         SpriteMeshInfo meshInfo = spriteMesh.End();
         spriteMesh.Begin(meshInfo);
-        spriteMesh.AddSprite(sprite, 0, 0, sprite.SizeX, sprite.SizeY, Color.white);
+        spriteMesh.AddSprite(sprite, 0, -sprite.SizeY, sprite.SizeX, sprite.SizeY, Color.white);
         spriteMesh.End();
         spriteMesh.Apply();
 
