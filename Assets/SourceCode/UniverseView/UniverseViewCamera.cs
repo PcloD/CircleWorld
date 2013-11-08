@@ -55,7 +55,18 @@ public class UniverseViewCamera : MonoBehaviour
         smoothTime = 0;
         
         if (followingObject)
-            UpdateFollowingObject();
+        {
+            if (AvatarInput.mode == AvatarInputMode.Move)
+                followingObjectDelta = Vector3.SmoothDamp(followingObjectDelta, Vector2.zero, ref followingObjectDeltaVelocity, 0.5f);
+            
+            Vector3 newPosition = followingObject.trans.position + trans.up * followingObjectDelta.y + trans.right * followingObjectDelta.x;
+            newPosition.z = CAMERA_Z;
+            
+            trans.position = newPosition;
+            trans.rotation = followingObject.trans.rotation;
+            
+            scale = followingObject.UniverseObject.Scale;
+        }
     }
     
     //Called by GameLogic
@@ -64,6 +75,7 @@ public class UniverseViewCamera : MonoBehaviour
     private float smoothTime;
     private Vector3 followingObjectDeltaVelocity;
     
+    //Called by GameLogic
     public bool UpdatePositionSmooth()
     {
         smoothTime += Time.deltaTime;
@@ -94,20 +106,6 @@ public class UniverseViewCamera : MonoBehaviour
         }
     }
     
-    private void UpdateFollowingObject()
-    {
-        if (AvatarInput.mode == AvatarInputMode.Move)
-            followingObjectDelta = Vector3.SmoothDamp(followingObjectDelta, Vector2.zero, ref followingObjectDeltaVelocity, 0.5f);
-        
-        Vector3 newPosition = followingObject.trans.position + trans.up * followingObjectDelta.y + trans.right * followingObjectDelta.x;
-        newPosition.z = CAMERA_Z;
-        
-        trans.position = newPosition;
-        trans.rotation = followingObject.trans.rotation;
-        
-        scale = followingObject.UniverseObject.Scale;
-    }
-
     public void UpdateZoomInput()
     {
         if (Application.platform == RuntimePlatform.Android ||
@@ -163,13 +161,6 @@ public class UniverseViewCamera : MonoBehaviour
     
     public void UpdateMove()
     {
-        if (AvatarInput.mode != AvatarInputMode.Edit || AvatarInput.editTool != AvatarInputEditTool.MoveCamera)
-        {
-            moving = false;
-            return;
-        }
-
-        
         Vector3 movingToInputPosition = movingFromInputPosition;
 
         if (Application.platform == RuntimePlatform.Android ||
@@ -246,12 +237,6 @@ public class UniverseViewCamera : MonoBehaviour
     
     public void UpdateClickOnPlanetToTravel(UniverseView universeView)
     {
-        if (AvatarInput.mode != AvatarInputMode.Move)
-        {
-            travelInput = false;
-            return;
-        }
-
         bool clickTravel = false;
         Vector2 clickPosition = Vector2.zero;
         

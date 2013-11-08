@@ -31,9 +31,6 @@ public class AvatarView : UniverseObjectView
         avatarInput.ResetInput();
     }
 
-
-
-
     public override void OnDrawGizmos ()
     {
         float sizeY = 1.05f;

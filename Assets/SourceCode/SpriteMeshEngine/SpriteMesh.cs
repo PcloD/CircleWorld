@@ -172,18 +172,15 @@ namespace SpriteMeshEngine
                     color);
         }
 
-        public void Apply(bool applyTriangles = true)
+        public void Apply()
         {
             mesh.vertices = positions;
             mesh.uv = uvs;
             mesh.colors32 = colors;
 
-            //if (applyTriangles)
-            //{
-                mesh.triangles = triangles;
-                mesh.Optimize();
-                mesh.RecalculateBounds();
-            //}
+            mesh.triangles = triangles;
+            mesh.Optimize();
+            mesh.RecalculateBounds();
         }
     }
 }

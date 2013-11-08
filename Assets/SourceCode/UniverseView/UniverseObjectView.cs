@@ -20,6 +20,11 @@ public class UniverseObjectView : MonoBehaviour, IUniverseObjectListener
         get { return parentView; }
     }
     
+    public UniverseView UniverseView
+    {
+        get { return universeView; }
+    }
+    
     public void Awake()
     {
         trans = transform;
