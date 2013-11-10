@@ -220,11 +220,11 @@ public class UniverseViewCamera : MonoBehaviour
     
     private void UpdateZoom()
     {
-        cameraDistance = Mathf.Clamp(cameraDistance, minCameraDistance, maxCameraDistance);  
-        
         float oldDelta = zoomingCameraDistanceDelta;
         zoomingCameraDistanceDelta = Mathf.SmoothDamp(zoomingCameraDistanceDelta, 0.0f, ref zoomingCameraDistanceDeltaVelocity, ZOOM_SMOOTH_TIME);
         cameraDistance += (oldDelta - zoomingCameraDistanceDelta);
+        
+        cameraDistance = Mathf.Clamp(cameraDistance, minCameraDistance, maxCameraDistance);  
 
         cam.orthographicSize = (cameraDistance + followingObjectCameraDistanceDelta) * scale;
     }

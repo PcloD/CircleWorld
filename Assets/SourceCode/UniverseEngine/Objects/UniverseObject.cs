@@ -94,7 +94,7 @@ namespace UniverseEngine
         
         public void Update(float deltaTime)
         {
-            OnUpdate();
+            OnUpdate(deltaTime);
             
             UpdatePosition(deltaTime);
             
@@ -102,7 +102,7 @@ namespace UniverseEngine
                 listener.OnUniverseObjectUpdated(deltaTime);
         }
         
-        protected virtual void OnUpdate()
+        protected virtual void OnUpdate(float deltaTime)
         {
             
         }

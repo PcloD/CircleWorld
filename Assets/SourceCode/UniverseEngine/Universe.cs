@@ -14,6 +14,8 @@ namespace UniverseEngine
         private const float TWO_PI = Mathf.PI * 2.0f; //360 degress in radians
         private const float INV_TWO_PI = 1.0f / (Mathf.PI * 2.0f); 
         private const float DEG_TO_RAD_OVER_100 = 0.000174532925f; //(degrees to radians / 100)
+        
+        private const float POSITIONS_TIME_SCALE = 0.01f;
 
         private Thing[] things = new Thing[MAX_THINGS];
         private ThingPosition[] thingsPositions = new ThingPosition[MAX_THINGS];
@@ -167,6 +169,8 @@ namespace UniverseEngine
 
         private void UpdatePositions(float time)
         {
+            time *= POSITIONS_TIME_SCALE;
+            
             for (int index = 1; index < thingsAmount; index++)
             {
                 Thing thing = things[index];
@@ -178,21 +182,9 @@ namespace UniverseEngine
                 float distance = thing.distance;
 
                 float normalizedOrbitalPeriod = time * thing.orbitalPeriodInv;
-
-                //if (thing.orbitalPeriod != 0)
-                //    normalizedOrbitalPeriod = time / thing.orbitalPeriod;
-                //else
-                //    normalizedOrbitalPeriod = 0;
-
                 normalizedOrbitalPeriod -= (int)normalizedOrbitalPeriod;
 
                 float normalizedRotationPeriod = time * thing.rotationPeriodInv;
-
-                //if (thing.rotationPeriod != 0)
-                //    normalizedRotationPeriod = time / thing.rotationPeriod;
-                //else
-                //    normalizedRotationPeriod = 0;
-
                 normalizedRotationPeriod -= (int)normalizedRotationPeriod;
 
                 angle += TWO_PI * normalizedOrbitalPeriod; //360 degrees to radians

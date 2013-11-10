@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 namespace UniverseEngine
 {
@@ -6,17 +7,25 @@ namespace UniverseEngine
     {
         public AvatarInput input = new AvatarInput();
         
-        public float jumpSpeed = 7.0f;
-        public float walkSpeed = 3.0f;
+        private float jumpSpeed = 7.0f;
+        private float walkSpeedMax = 3.0f;
+        private float walkAcceleration = 10.0f;
+        private float walkFriction = 10.0f;
         
-        protected override void OnUpdate()
+        protected override void OnUpdate(float deltaTime)
         {
             if (CanWalk())
-                Walk(input.walkDirection);
+            {
+                if (input.walkDirection != 0)
+                    velocity.x += input.walkDirection * walkAcceleration * deltaTime;
+                else
+                    velocity.x -= Mathf.Sign(velocity.x) * Mathf.Clamp(walkFriction * deltaTime, 0, Mathf.Abs(velocity.x));
+                    
+                velocity.x = Mathf.Clamp(velocity.x, -walkSpeedMax, walkSpeedMax);
+            }
 
-            if (input.jump)
-                if (CanJump())
-                    Jump();
+            if (input.jump && CanJump())
+                velocity.y = jumpSpeed;
             
             input.Reset();
         }
@@ -25,20 +34,10 @@ namespace UniverseEngine
         {
             return true;
         }
-        
-        public void Walk(float direction)
-        {
-            velocity.x = direction * walkSpeed;
-        }
-        
+                
         public bool CanJump()
         {
             return (hitFlags & TileHitFlags.Down) != 0;
-        }
-        
-        public void Jump()
-        {
-            velocity.y = jumpSpeed;
         }
     }
 }

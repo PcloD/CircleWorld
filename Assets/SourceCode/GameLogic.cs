@@ -70,21 +70,20 @@ public class GameLogic : MonoBehaviour
         {
             case GameLogicState.PlayingAvatar:
                 universeTimeMultiplier = Mathf.SmoothDamp(universeTimeMultiplier, 1.0f, ref universeTimeMultiplierVelocity, 0.25f);
-                universeView.UpdateUniverse(Time.deltaTime * universeTimeMultiplier);
                 break;
                 
             case GameLogicState.PlayingShip:
                 universeTimeMultiplier = Mathf.SmoothDamp(universeTimeMultiplier, 1.0f, ref universeTimeMultiplierVelocity, 0.25f);
-                universeView.UpdateUniverse(Time.deltaTime * universeTimeMultiplier);
                 break;
                 
             case GameLogicState.Travelling:
                 universeTimeMultiplier = Mathf.SmoothDamp(universeTimeMultiplier, 0.1f, ref universeTimeMultiplierVelocity, 0.25f);
-                universeView.UpdateUniverse(Time.deltaTime * universeTimeMultiplier);
                 if (stateTime > 1.25f)
                     SwitchState(GameLogicState.PlayingAvatar);
                 break;
         }
+        
+        universeView.UpdateUniverse(Time.deltaTime * universeTimeMultiplier);
 	}
     
     public void TravelToPlanet(PlanetView targetPlanetView)
