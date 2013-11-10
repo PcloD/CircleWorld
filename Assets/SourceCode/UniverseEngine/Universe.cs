@@ -309,6 +309,26 @@ namespace UniverseEngine
             else
                 return -1;
         }
+        
+        public List<ushort> FindClosestRenderedThings(Vector2 worldPos, float searchRadius, List<ushort> toReturn)
+        {
+            if (toReturn == null)
+                toReturn = new List<ushort>();
+            else
+                toReturn.Clear();
+            
+            for (ushort i = 0; i < thingsToRenderAmount; i++)
+            {
+                ThingPosition thingPosition = thingsPositions[thingsToRender[i]];
+                
+                float distance = (worldPos - new Vector2(thingPosition.x, thingPosition.y)).sqrMagnitude;
+                
+                if (distance < (thingPosition.radius + searchRadius) * (thingPosition.radius + searchRadius))
+                    toReturn.Add(thingsToRender[i]);
+            }
+            
+            return toReturn;
+        }        
     }
 }
 

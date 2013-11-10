@@ -268,6 +268,8 @@ namespace UniverseEngine
             {
                 if (parentFollowRotation)
                     rotation = parent.GetAngleFromPosition(position);
+                else
+                    rotation += deltaRotation;
                 
                 distanceInTilemapCircle = parent.GetDistanceFromPosition(position);
                 angleInTilemapCirclePosition = parent.GetAngleFromPosition(position);

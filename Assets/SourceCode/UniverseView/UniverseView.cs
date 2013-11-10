@@ -95,6 +95,9 @@ public class UniverseView : MonoBehaviour, IUniverseListener
         
         Planet planet = universe.GetPlanet(thingIndex);
         
+        if (planet == null)
+            return null;
+        
         PlanetView planetView = universeFactory.GetPlanet(planet.Height);
         
         planetView.InitPlanet(planet, this);
