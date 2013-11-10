@@ -17,13 +17,10 @@ public enum AvatarInputEditTool
     MoveCamera
 }
 
-public class AvatarInput : MonoBehaviour
+public class AvatarViewInput : MonoBehaviour
 {
     public AvatarView avatarView;
-    
-    public float walkDirection;
-    public bool jump;
-    
+       
     static public AvatarInputMode mode = AvatarInputMode.Move;
     static public AvatarInputEditTool editTool = AvatarInputEditTool.None;
         
@@ -49,8 +46,11 @@ public class AvatarInput : MonoBehaviour
         useGUILayout = false;
     }
     
-    public void UpdateInput()
+    public void Update()
     {
+        if (GameLogic.Instace.State != GameLogicState.PlayingAvatar)
+            return;
+        
         switch(mode)
         {
             case AvatarInputMode.Edit:
@@ -70,14 +70,11 @@ public class AvatarInput : MonoBehaviour
         }
     }
     
-    public void ResetInput()
-    {
-        walkDirection = 0;
-        jump = false;
-    }
     
     private void UpdateWalkAndJump()
     {
+        UniverseEngine.AvatarInput avatarInput = ((UniverseEngine.Avatar) avatarView.UniverseObject).input;
+        
         if (Application.platform == RuntimePlatform.Android || Application.platform == RuntimePlatform.IPhonePlayer)
         {
             int touchCount = Input.touchCount;
@@ -90,26 +87,26 @@ public class AvatarInput : MonoBehaviour
                 if (touch1.position.x > Screen.width / 2.0f && touch1.position.y < Screen.height * 0.25f ||
                     touchCount > 1 && touch2.position.x > Screen.width / 2.0f  && touch2.position.y < Screen.height * 0.25f)
                 {
-                    jump = true;
+                    avatarInput.jump = true;
                 }
 
                 if (touch1.position.x < Screen.width / 4.0f  && touch1.position.y < Screen.height * 0.25f ||
                     touchCount > 1 && touch2.position.x < Screen.width / 4.0f && touch2.position.y < Screen.height * 0.25f)
                 {
-                    walkDirection = -1.0f;
+                    avatarInput.walkDirection = -1.0f;
                 }
                 else if (touch1.position.x < Screen.width / 2.0f  && touch1.position.y < Screen.height * 0.25f ||
                          touchCount > 1 && touch2.position.x < Screen.width / 2.0f && touch2.position.y < Screen.height * 0.25f)
                 {
-                    walkDirection = 1.0f;
+                    avatarInput.walkDirection = 1.0f;
                 }
             }
         }
         else
         {
-            walkDirection = Input.GetAxis("Horizontal");
+            avatarInput.walkDirection = Input.GetAxisRaw("Horizontal");
 
-            jump = Input.GetKey(KeyCode.Z) || Input.GetKey(KeyCode.Space);
+            avatarInput.jump = Input.GetKey(KeyCode.Z) || Input.GetKey(KeyCode.Space);
         }
     }
 

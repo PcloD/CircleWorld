@@ -4,26 +4,9 @@ using UniverseEngine;
 
 public class ShipView : UniverseObjectView
 {
-    public ShipInput shipInput;
-    
-    public override void OnUniverseObjectUpdated(float deltaTime)
-    {
-        UpdatePosition();
-    }
-    
     public override void OnParentChanged (TilemapCircle parent)
     {
         base.OnParentChanged (parent);
-    }
-    
-    
-    public void ProcessInput()
-    {
-        UniverseEngine.Ship ship = (UniverseEngine.Ship) universeObject;
-        
-        ship.Move(shipInput.moveDirection, shipInput.rotateDirection);
-
-        shipInput.ResetInput();
     }
 
     public override void OnDrawGizmos ()

@@ -4,8 +4,22 @@ namespace UniverseEngine
 {
     public class Avatar : UniverseObject
     {
+        public AvatarInput input = new AvatarInput();
+        
         public float jumpSpeed = 7.0f;
         public float walkSpeed = 3.0f;
+        
+        protected override void OnUpdate()
+        {
+            if (CanWalk())
+                Walk(input.walkDirection);
+
+            if (input.jump)
+                if (CanJump())
+                    Jump();
+            
+            input.Reset();
+        }
         
         public bool CanWalk()
         {

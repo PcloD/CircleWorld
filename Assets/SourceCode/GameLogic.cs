@@ -37,12 +37,11 @@ public class GameLogic : MonoBehaviour
         switch(toState)
         {
             case GameLogicState.PlayingAvatar:
-                universeCamera.FollowingObject = universeView.avatarView.trans;
-                
+                universeCamera.FollowObject(universeView.avatarView.trans, FollowCameraParameters.FollowRotation | FollowCameraParameters.FollowScale, true);
                 break;
                 
             case GameLogicState.PlayingShip:
-                universeCamera.FollowingObject = universeView.shipView.trans;
+                universeCamera.FollowObject(universeView.shipView.trans, FollowCameraParameters.None, true);
                 break;
         }
     }
@@ -72,31 +71,20 @@ public class GameLogic : MonoBehaviour
             case GameLogicState.PlayingAvatar:
                 universeTimeMultiplier = Mathf.SmoothDamp(universeTimeMultiplier, 1.0f, ref universeTimeMultiplierVelocity, 0.25f);
                 universeView.UpdateUniverse(Time.deltaTime * universeTimeMultiplier);
-                universeCamera.UpdatePosition();
-                universeView.avatarView.avatarInput.UpdateInput();
-                universeView.avatarView.ProcessInput();
                 break;
                 
             case GameLogicState.PlayingShip:
                 universeTimeMultiplier = Mathf.SmoothDamp(universeTimeMultiplier, 1.0f, ref universeTimeMultiplierVelocity, 0.25f);
                 universeView.UpdateUniverse(Time.deltaTime * universeTimeMultiplier);
-                universeCamera.UpdatePosition();
-                universeView.shipView.shipInput.UpdateInput();
-                universeView.shipView.ProcessInput();
                 break;
                 
             case GameLogicState.Travelling:
                 universeTimeMultiplier = Mathf.SmoothDamp(universeTimeMultiplier, 0.1f, ref universeTimeMultiplierVelocity, 0.25f);
                 universeView.UpdateUniverse(Time.deltaTime * universeTimeMultiplier);
-                if (universeCamera.UpdatePositionSmooth())
-                {
-                    universeView.avatarView.avatarInput.ResetInput();
+                if (stateTime > 1.25f)
                     SwitchState(GameLogicState.PlayingAvatar);
-                }
                 break;
         }
-        
-        //universeView.SetVisible(universeCamera.cameraDistance > 70);
 	}
     
     public void TravelToPlanet(PlanetView targetPlanetView)

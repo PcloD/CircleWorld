@@ -7,12 +7,9 @@ public enum ShipInputMode
     Move
 }
 
-public class ShipInput : MonoBehaviour
+public class ShipViewInput : MonoBehaviour
 {
     public ShipView shipView;
-    
-    public float moveDirection;
-    public float rotateDirection;
     
     static public ShipInputMode mode = ShipInputMode.Move;
     
@@ -24,8 +21,11 @@ public class ShipInput : MonoBehaviour
         useGUILayout = false;
     }
     
-    public void UpdateInput()
+    public void Update()
     {
+        if (GameLogic.Instace.State != GameLogicState.PlayingShip)
+            return;
+        
         switch(mode)
         {
             case ShipInputMode.Move:
@@ -34,15 +34,11 @@ public class ShipInput : MonoBehaviour
                 break;
         }
     }
-    
-    public void ResetInput()
-    {
-        moveDirection = 0;
-        rotateDirection = 0;
-    }
-    
+        
     private void UpdateMove()
     {
+        UniverseEngine.ShipInput shipInput = ((UniverseEngine.Ship) shipView.UniverseObject).input;
+        
         if (Application.platform == RuntimePlatform.Android || Application.platform == RuntimePlatform.IPhonePlayer)
         {
             int touchCount = Input.touchCount;
@@ -54,25 +50,25 @@ public class ShipInput : MonoBehaviour
                 if (touch1.position.x > Screen.width / 2.0f && touch1.position.y < Screen.height * 0.25f ||
                     touchCount > 1 && touch2.position.x > Screen.width / 2.0f  && touch2.position.y < Screen.height * 0.25f)
                 {
-                    moveDirection = 1.0f;
+                    shipInput.moveDirection = 1.0f;
                 }
 
                 if (touch1.position.x < Screen.width / 4.0f  && touch1.position.y < Screen.height * 0.25f ||
                     touchCount > 1 && touch2.position.x < Screen.width / 4.0f && touch2.position.y < Screen.height * 0.25f)
                 {
-                    rotateDirection = -1.0f;
+                    shipInput.rotateDirection = -1.0f;
                 }
                 else if (touch1.position.x < Screen.width / 2.0f  && touch1.position.y < Screen.height * 0.25f ||
                          touchCount > 1 && touch2.position.x < Screen.width / 2.0f && touch2.position.y < Screen.height * 0.25f)
                 {
-                    rotateDirection = 1.0f;
+                    shipInput.rotateDirection = 1.0f;
                 }
             }
         }
         else
         {
-            rotateDirection = Input.GetAxis("Horizontal");
-            moveDirection = Input.GetAxis("Vertical");
+            shipInput.rotateDirection = Input.GetAxisRaw("Horizontal");
+            shipInput.moveDirection = Input.GetAxisRaw("Vertical");
         }
     }
     

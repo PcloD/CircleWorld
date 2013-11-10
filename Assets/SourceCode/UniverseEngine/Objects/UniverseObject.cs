@@ -94,10 +94,17 @@ namespace UniverseEngine
         
         public void Update(float deltaTime)
         {
+            OnUpdate();
+            
             UpdatePosition(deltaTime);
             
             if (listener != null)
                 listener.OnUniverseObjectUpdated(deltaTime);
+        }
+        
+        protected virtual void OnUpdate()
+        {
+            
         }
         
         protected void UpdatePosition(float deltaTime)

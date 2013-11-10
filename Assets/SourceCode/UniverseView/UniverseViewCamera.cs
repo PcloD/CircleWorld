@@ -1,11 +1,21 @@
 using UnityEngine;
 using UniverseEngine;
 
+[System.Flags]
+public enum FollowCameraParameters
+{
+    None = 0,
+    FollowRotation = 1 << 1,
+    FollowScale = 1 << 2
+}
+
 public class UniverseViewCamera : MonoBehaviour
 {
     static public UniverseViewCamera Instance;
     
     private const float CAMERA_Z = -10;
+    private const float SMOOTH_TIME = 0.5f;
+    private const float ZOOM_SMOOTH_TIME = 0.15f;
     
     public float cameraDistance = 10;
     public float zoomSpeed = 10;
@@ -13,7 +23,6 @@ public class UniverseViewCamera : MonoBehaviour
     
     public float minCameraDistance = 4;
     public float maxCameraDistance = 4000;
-    
 
     private Camera cam;
     private Transform trans;
@@ -28,31 +37,33 @@ public class UniverseViewCamera : MonoBehaviour
     private Vector3 zoomingTouchFinger1FromPosition;
     private Vector3 zoomingTouchFinger2FromPosition;
     
+    private float zoomingCameraDistanceDelta;
+    private float zoomingCameraDistanceDeltaVelocity;
+    
+    #region Follow Object Parameters
     private Transform followingObject;
-    private Vector2 followingObjectPositionDelta = Vector2.zero;
-    private float followingObjectScaleDelta = 0.0f;
+    private bool followRotation;
+    private bool followScale;
+    
+    private Vector2 followingObjectPositionDelta;
+    private Vector3 followingObjectPositionDeltaVelocity;
+    
+    private float followingObjectScaleDelta;
+    private float followingObjectScaleDeltaVelocity;
+    
+    private float followingObjectCameraDistanceDelta;
+    private float followingObjectCameraDistanceDeltaVelocity;
+    
     private Quaternion followingObjectRotationDelta = Quaternion.identity;
+    
+    private float followObjectSmoothTime;
+    #endregion
     
     public Transform FollowingObject 
     {
         get 
         { 
             return followingObject; 
-        }
-        
-        set 
-        { 
-            if (followingObject != value)
-            {
-                if (followingObject != null && value != null)
-                {
-                    followingObjectPositionDelta = trans.position - value.position;
-                    followingObjectScaleDelta = scale - value.lossyScale.x;
-                    followingObjectRotationDelta = trans.rotation * Quaternion.Inverse(value.rotation);
-                }
-                
-                followingObject = value; 
-            }
         }
     }
 
@@ -65,76 +76,92 @@ public class UniverseViewCamera : MonoBehaviour
         
         trans.position = new Vector3(0, 0, CAMERA_Z);
     }
+    
+    public void Update()
+    {
+        switch(GameLogic.Instace.State)
+        {
+            case GameLogicState.PlayingAvatar:
+            case GameLogicState.PlayingShip:
+                UpdatePosition();
+                UpdateZoomInput();
+                UpdateZoom();
+                break;
+                
+            case GameLogicState.Travelling:
+                UpdatePositionSmooth();
+                UpdateZoom();
+                break;
+        }
+    }
  
     //Called by GameLogic
-    public void UpdatePosition()
+    private void UpdatePosition()
     {
-        //positionVelocity = Vector3.zero;
-        //scaleVelocity = 0;
-        smoothTime = 0;
+        followObjectSmoothTime = 0;
         
         if (followingObject)
         {
-            if (GameLogic.Instace.State == GameLogicState.PlayingAvatar && AvatarInput.mode == AvatarInputMode.Move ||
-                GameLogic.Instace.State == GameLogicState.PlayingShip && ShipInput.mode == ShipInputMode.Move)
+            if (GameLogic.Instace.State == GameLogicState.PlayingAvatar && AvatarViewInput.mode == AvatarInputMode.Move ||
+                GameLogic.Instace.State == GameLogicState.PlayingShip && ShipViewInput.mode == ShipInputMode.Move)
             {
-                followingObjectPositionDelta = Vector3.SmoothDamp(followingObjectPositionDelta, Vector2.zero, ref followingObjectDeltaPositionVelocity, 0.5f);
-                followingObjectScaleDelta = Mathf.SmoothDamp(followingObjectScaleDelta, 0, ref followingObjectDeltaScaleVelocity, 0.5f);
-                followingObjectRotationDelta = Quaternion.Slerp(followingObjectRotationDelta, Quaternion.identity, Time.deltaTime * 2.0f);
+                followingObjectPositionDelta = Vector3.SmoothDamp(followingObjectPositionDelta, Vector2.zero, ref followingObjectPositionDeltaVelocity, SMOOTH_TIME);
+                followingObjectScaleDelta = Mathf.SmoothDamp(followingObjectScaleDelta, 0, ref followingObjectScaleDeltaVelocity, SMOOTH_TIME);
+                followingObjectRotationDelta = Quaternion.Slerp(followingObjectRotationDelta, Quaternion.identity, Time.deltaTime * (1.0f / SMOOTH_TIME));
+                followingObjectCameraDistanceDelta = Mathf.SmoothDamp(followingObjectCameraDistanceDelta, 0, ref followingObjectCameraDistanceDeltaVelocity, SMOOTH_TIME);
             }
             
             Vector3 newPosition;
             
-            
-            if (GameLogic.Instace.State == GameLogicState.PlayingAvatar && AvatarInput.mode == AvatarInputMode.Edit)
-            {
+            if (GameLogic.Instace.State == GameLogicState.PlayingAvatar && AvatarViewInput.mode == AvatarInputMode.Edit)
                 newPosition = followingObject.position + trans.up * followingObjectPositionDelta.y + trans.right * followingObjectPositionDelta.x;
-            }
             else
-            {
                 newPosition = followingObject.position + (Vector3) followingObjectPositionDelta;
-            }
             
             newPosition.z = CAMERA_Z;
             
-            trans.position = newPosition;
-            trans.rotation = followingObject.rotation * followingObjectRotationDelta;
+            Quaternion newRotation;
             
-            scale = followingObject.lossyScale.x + followingObjectScaleDelta;
+            if (followRotation)
+                newRotation = followingObject.rotation;
+            else
+                newRotation = Quaternion.identity;
+            
+            float newScale;
+            
+            if (followScale)
+                newScale = followingObject.lossyScale.x;
+            else
+                newScale = 1.0f;
+            
+            trans.position = newPosition;
+            trans.rotation = newRotation * followingObjectRotationDelta;
+            scale = newScale + followingObjectScaleDelta;
         }
     }
     
     //Called by GameLogic
-    //private Vector3 positionVelocity;
-    //private float scaleVelocity;
-    private float smoothTime;
-    private Vector3 followingObjectDeltaPositionVelocity;
-    private float followingObjectDeltaScaleVelocity;
-    
-    //Called by GameLogic
-    public bool UpdatePositionSmooth()
+    private bool UpdatePositionSmooth()
     {
-        smoothTime += Time.deltaTime;
+        followObjectSmoothTime += Time.deltaTime;
         
-        followingObjectPositionDelta = Vector3.SmoothDamp(followingObjectPositionDelta, Vector2.zero, ref followingObjectDeltaPositionVelocity, 0.5f);
+        //followingObjectPositionDelta = Vector3.SmoothDamp(followingObjectPositionDelta, Vector2.zero, ref followingObjectPositionDeltaVelocity, SMOOTH_TIME);
         
         if (followingObject)
         {
+            followingObjectPositionDelta = Vector3.Lerp(followingObjectPositionDelta, Vector2.zero, followObjectSmoothTime / 1.0f);
+            
             Vector3 newPosition = followingObject.position + trans.up * followingObjectPositionDelta.y + trans.right * followingObjectPositionDelta.x;
             newPosition.z = CAMERA_Z;
             
             Quaternion newRotation = followingObject.rotation;
             float newScale = followingObject.lossyScale.x;
             
-            //trans.position = Vector3.SmoothDamp(trans.position, newPosition, ref positionVelocity, 0.5f);
-            //trans.rotation = Quaternion.RotateTowards(trans.rotation, newRotation, Time.deltaTime * 180.0f);
-            //scale = Mathf.SmoothDamp(scale, newScale, ref scaleVelocity, 1.0f);
+            trans.position = Vector3.Lerp(trans.position, newPosition, followObjectSmoothTime / 1.0f);
+            trans.rotation = Quaternion.Lerp(trans.rotation, newRotation, followObjectSmoothTime / 1.0f);
+            scale = Mathf.Lerp(scale, newScale, followObjectSmoothTime / 1.0f);
             
-            trans.position = Vector3.Lerp(trans.position, newPosition, smoothTime / 1.0f);
-            trans.rotation = Quaternion.Lerp(trans.rotation, newRotation, smoothTime / 1.0f);
-            scale = Mathf.Lerp(scale, newScale, smoothTime / 1.0f);
-            
-            return smoothTime > 1.0f;
+            return followObjectSmoothTime > 1.0f;
         }
         else
         {
@@ -176,23 +203,30 @@ public class UniverseViewCamera : MonoBehaviour
                 float deltaTo = (finger1ToPosition - finger2ToPosition).magnitude;
 
                 float zoom = (deltaTo - deltaFrom) / Mathf.Sqrt(Screen.width * Screen.width + Screen.height * Screen.height);
-                cameraDistance -= cameraDistance * zoom * 4;
+                
+                zoomingCameraDistanceDelta -= (cameraDistance + zoomingCameraDistanceDelta) * zoom * 4;
 
                 zoomingTouchFinger1FromPosition = finger1ToPosition;
                 zoomingTouchFinger2FromPosition = finger2ToPosition;
             }
-
         }
         else
         {
             //Use mouse
             float zoom = Input.GetAxis("Mouse ScrollWheel");
-            cameraDistance -= cameraDistance * zoom * zoomSpeed * Time.deltaTime;
+            zoomingCameraDistanceDelta -= (cameraDistance + zoomingCameraDistanceDelta) * zoom * zoomSpeed * Time.deltaTime;
         }
-        
+    }
+    
+    private void UpdateZoom()
+    {
         cameraDistance = Mathf.Clamp(cameraDistance, minCameraDistance, maxCameraDistance);  
+        
+        float oldDelta = zoomingCameraDistanceDelta;
+        zoomingCameraDistanceDelta = Mathf.SmoothDamp(zoomingCameraDistanceDelta, 0.0f, ref zoomingCameraDistanceDeltaVelocity, ZOOM_SMOOTH_TIME);
+        cameraDistance += (oldDelta - zoomingCameraDistanceDelta);
 
-        cam.orthographicSize = cameraDistance * scale;
+        cam.orthographicSize = (cameraDistance + followingObjectCameraDistanceDelta) * scale;
     }
     
     public void UpdateMove()
@@ -382,5 +416,41 @@ public class UniverseViewCamera : MonoBehaviour
                     GameLogic.Instace.TravelToPlanet(targetPlanetView);
             }
         }
-    }    
+    }
+    
+    public void FollowObject(Transform toFollow, FollowCameraParameters parameters, bool smoothTransition)
+    {
+        followRotation = (parameters & FollowCameraParameters.FollowRotation) != 0;
+        followScale = (parameters & FollowCameraParameters.FollowScale) != 0;
+        
+        if (followingObject != toFollow)
+        {
+            if (smoothTransition && followingObject != null && toFollow != null)
+            {
+                followingObjectPositionDelta = trans.position - toFollow.position;
+                
+                if (followScale)
+                {
+                    followingObjectScaleDelta = scale - toFollow.lossyScale.x;
+                    
+                    followingObjectCameraDistanceDelta = cameraDistance - cameraDistance * (scale / toFollow.lossyScale.x);
+                    cameraDistance = cameraDistance * (scale / toFollow.lossyScale.x);
+                }
+                else
+                {
+                    followingObjectScaleDelta = scale - 1.0f;
+                    
+                    followingObjectCameraDistanceDelta = cameraDistance - cameraDistance * (scale / 1.0f);
+                    cameraDistance = cameraDistance * (scale / 1.0f);
+                }
+                
+                if (followRotation)
+                    followingObjectRotationDelta = trans.rotation * Quaternion.Inverse(toFollow.rotation);
+                else
+                    followingObjectRotationDelta = trans.rotation * Quaternion.Inverse(Quaternion.identity);
+            }
+            
+            followingObject = toFollow; 
+        }
+    }
 }
