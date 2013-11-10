@@ -22,7 +22,7 @@ public class UniverseViewCamera : MonoBehaviour
     public float scale = 1.0f;
     
     public float minCameraDistance = 4;
-    public float maxCameraDistance = 4000;
+    public float maxCameraDistance = 36000;
 
     private Camera cam;
     private Transform trans;
@@ -383,35 +383,11 @@ public class UniverseViewCamera : MonoBehaviour
             Vector2 worldPos = Camera.main.ScreenToWorldPoint(clickPosition);
             Vector2 worldPosTolerance = Camera.main.ScreenToWorldPoint(clickPosition + Vector2.right * (Screen.dpi > 0 ? Screen.dpi : 72) / 2.54f); //1 cm tolerance
             
-            float clickTolerance = (worldPosTolerance - worldPos).magnitude;
-            
-            ushort closestThingIndex = ushort.MaxValue;
-            float closestThingDistance = float.MaxValue;
-            
-            ThingPosition[] thingsPositions = universeView.Universe.ThingsPositions;
-            ushort[] thingsToRender = universeView.Universe.ThingsToRender;
-            ushort thingsToRenderAmount = universeView.Universe.ThingsToRenderAmount;
-            
-            for (ushort i = 0; i < thingsToRenderAmount; i++)
+            int clickedThingIndex = universeView.Universe.FindClosestRenderedThing(worldPos, (worldPos - worldPosTolerance).magnitude);
+               
+            if (clickedThingIndex >= 0)
             {
-                ThingPosition thingPosition = thingsPositions[thingsToRender[i]];
-                
-                float distance = (worldPos - new Vector2(thingPosition.x, thingPosition.y)).sqrMagnitude;
-                
-                if (distance < (thingPosition.radius + clickTolerance) * (thingPosition.radius + clickTolerance) && 
-                    distance < closestThingDistance)
-                {
-                    closestThingIndex = thingsToRender[i];
-                    closestThingDistance = distance;
-                }
-            }
-            
-            
-            
-            if (closestThingIndex != ushort.MaxValue)
-            {
-                PlanetView targetPlanetView = universeView.GetPlanetView(closestThingIndex);
-                
+                PlanetView targetPlanetView = universeView.GetPlanetView((ushort) clickedThingIndex);
                 if (universeView.avatarView.UniverseObject.parent != targetPlanetView.TilemapCircle)
                     GameLogic.Instace.TravelToPlanet(targetPlanetView);
             }

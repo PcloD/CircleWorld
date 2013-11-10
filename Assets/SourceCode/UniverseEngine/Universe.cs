@@ -220,6 +220,13 @@ namespace UniverseEngine
                 if (planets[i].ThingIndex == thingIndex)
                     return planets[i];
             
+            if (things[thingIndex].type != (ushort) ThingType.Sun &&
+                things[thingIndex].type != (ushort) ThingType.Planet &&
+                things[thingIndex].type != (ushort) ThingType.Moon)
+            {
+                return null;
+            }
+            
             Planet planet = universeFactory.GetPlanet(Planet.GetPlanetHeightWithRadius(things[thingIndex].radius));
             
             planet.InitPlanet(this, thingIndex);
@@ -248,7 +255,9 @@ namespace UniverseEngine
             avatar.Init(
                 new Vector2(0.75f, 1.05f),
                 planet,
-                planet.GetPositionFromTileCoordinate(0, planet.Height)
+                FollowParentParameters.Default,
+                planet.GetPositionFromTileCoordinate(0, planet.Height),
+                0.0f
             );
             
             AddUniverseObject(avatar);
@@ -259,8 +268,10 @@ namespace UniverseEngine
             ship = universeFactory.GetShip();
             ship.Init(
                 new Vector2(1.0f, 1.0f),
-                null,
-                avatar.parent.GetPositionFromTileCoordinate(0, avatar.parent.Height + 5)
+                avatar.parent,
+                FollowParentParameters.None,
+                avatar.parent.GetPositionFromTileCoordinate(0, avatar.parent.Height + 5),
+                Mathf.PI * 0.5f
             );
             
             AddUniverseObject(ship);
@@ -272,6 +283,31 @@ namespace UniverseEngine
             
             if (listener != null)
                 listener.OnUniverseObjectAdded(universeObject);
+        }
+        
+        public int FindClosestRenderedThing(Vector2 worldPos, float searchRadius)
+        {
+            ushort closestThingIndex = ushort.MaxValue;
+            float closestThingDistance = float.MaxValue;
+            
+            for (ushort i = 0; i < thingsToRenderAmount; i++)
+            {
+                ThingPosition thingPosition = thingsPositions[thingsToRender[i]];
+                
+                float distance = (worldPos - new Vector2(thingPosition.x, thingPosition.y)).sqrMagnitude;
+                
+                if (distance < (thingPosition.radius + searchRadius) * (thingPosition.radius + searchRadius) && 
+                    distance < closestThingDistance)
+                {
+                    closestThingIndex = thingsToRender[i];
+                    closestThingDistance = distance;
+                }
+            }
+            
+            if (closestThingIndex != ushort.MaxValue)
+                return closestThingIndex;
+            else
+                return -1;
         }
     }
 }

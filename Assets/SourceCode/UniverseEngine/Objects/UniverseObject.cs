@@ -3,6 +3,16 @@ using System.Collections;
 
 namespace UniverseEngine
 {
+    [System.Flags]
+    public enum FollowParentParameters
+    {
+        None = 0,
+        Default = FollowRotation | FollowScale | CheckCollisions,
+        FollowRotation = 1 << 1,
+        FollowScale = 1 << 2,
+        CheckCollisions = 1 << 3
+    }
+    
     public class UniverseObject
     {
         public TilemapCircle parent;
@@ -10,10 +20,12 @@ namespace UniverseEngine
         protected bool useGravity = true;
      
         protected Vector2 position;
-        protected float scale;
-        protected float rotation; //radians
+        protected float scale = 1.0f;
+        protected float rotation = 0.0f; //radians
         
         protected Vector2 size = new Vector2(1, 1);
+        
+        protected bool visible = true;
         
         protected Vector2 velocity;
         protected float rotationVelocity;
@@ -23,7 +35,11 @@ namespace UniverseEngine
         protected float distanceInTilemapCircle;
         protected float angleInTilemapCirclePosition;
         
-        private IUniverseObjectListener listener;
+        protected IUniverseObjectListener listener;
+        
+        protected bool parentFollowScale;
+        protected bool parentFollowRotation;
+        protected bool parentCheckCollisions;
         
         public Vector2 Position
         {
@@ -62,30 +78,43 @@ namespace UniverseEngine
             set { this.listener = value; }
         }
         
-        public void Init(Vector2 size, TilemapCircle parent, Vector2 position)
+        public bool Visible
+        {
+            get { return visible; }
+            set 
+            { 
+                this.visible = value; 
+                if (listener != null)
+                    listener.OnUniverseObjectUpdated(0.0f);
+            }
+        }
+        
+        public void Init(Vector2 size, TilemapCircle parent, FollowParentParameters followParameters, Vector2 position, float rotation)
         {
             this.size = size;
             
-            SetParent(parent, position);
+            SetParent(parent, followParameters, position, rotation);
         }
         
-        public void SetParent(TilemapCircle parent, Vector2 position)
+        public void SetParent(TilemapCircle parent, FollowParentParameters followParameters, Vector2 position, float rotation)
         {
             this.parent = parent;
             this.position = position;
+            this.rotation = rotation;
+            this.parentFollowScale = (followParameters & FollowParentParameters.FollowScale) != 0;
+            this.parentFollowRotation = (followParameters & FollowParentParameters.FollowRotation) != 0;
+            this.parentCheckCollisions = (followParameters & FollowParentParameters.CheckCollisions) != 0;
             
             if (parent != null)
             {
-                this.scale = parent.GetScaleFromPosition(position);
-                this.rotation = parent.GetAngleFromPosition(position);
+                if (parentFollowScale)
+                    this.scale = parent.GetScaleFromPosition(position);
+                
+                if (parentFollowRotation)
+                    this.rotation = parent.GetAngleFromPosition(position);
                 
                 distanceInTilemapCircle = parent.GetDistanceFromPosition(position);
                 angleInTilemapCirclePosition = parent.GetAngleFromPosition(position);
-            }
-            else
-            {
-                this.scale = 1.0f;
-                this.rotation = 0.0f;
             }
             
             if (listener != null)
@@ -118,9 +147,12 @@ namespace UniverseEngine
             if (parent != null)
             {
                 position = parent.GetPositionFromDistanceAndAngle(distanceInTilemapCircle, angleInTilemapCirclePosition);
-                rotation = parent.GetAngleFromPosition(position);
                 
-                scale = parent.GetScaleFromPosition(position);
+                if (parentFollowRotation)
+                    rotation = parent.GetAngleFromPosition(position);
+                
+                if (parentFollowScale)
+                    scale = parent.GetScaleFromPosition(position);
                 
                 if (parent is Planet && useGravity)
                     velocity.y -= ((Planet) parent).Gravity * deltaTime;
@@ -129,7 +161,11 @@ namespace UniverseEngine
                 tangent = parent.GetTangentFromPosition(position); //doesn't change with vertical position
                 
                 deltaPosition = velocity * deltaTime * scale;
-                deltaRotation = 0.0f;
+                
+                if (parentFollowRotation)
+                    deltaRotation = 0.0f;
+                else
+                    deltaRotation = rotationVelocity * deltaTime;
             }
             else
             {
@@ -142,7 +178,7 @@ namespace UniverseEngine
             
             hitFlags = TileHitFlags.None;
             
-            if (parent != null)
+            if (parent != null && parentCheckCollisions)
             {
                 TileHitInfo hitInfo;
         
@@ -181,11 +217,11 @@ namespace UniverseEngine
             if (deltaPosition.y != 0)
             {
                 position += normal * deltaPosition.y;
-                if (parent != null)
+                if (parent != null && parentFollowScale)
                     scale = parent.GetScaleFromPosition(position);
             }
             
-            if (parent != null)
+            if (parent != null && parentCheckCollisions)
             {
                 TileHitInfo hitInfo;
                 
@@ -230,7 +266,8 @@ namespace UniverseEngine
     
             if (parent != null)
             {
-                rotation = parent.GetAngleFromPosition(position);
+                if (parentFollowRotation)
+                    rotation = parent.GetAngleFromPosition(position);
                 
                 distanceInTilemapCircle = parent.GetDistanceFromPosition(position);
                 angleInTilemapCirclePosition = parent.GetAngleFromPosition(position);

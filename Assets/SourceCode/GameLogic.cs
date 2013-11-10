@@ -88,24 +88,24 @@ public class GameLogic : MonoBehaviour
     
     public void TravelToPlanet(PlanetView targetPlanetView)
     {
-        universeView.avatarView.UniverseObject.SetParent(
-            targetPlanetView.TilemapCircle,
-            targetPlanetView.TilemapCircle.GetPositionFromTileCoordinate(0, targetPlanetView.TilemapCircle.Height)
-        );
-        
+        ((UniverseEngine.Avatar) universeView.avatarView.UniverseObject).TravelToPlanet((Planet) targetPlanetView.TilemapCircle);
         //Force update to update AvatarView position
         universeView.UpdateUniverse(Time.deltaTime);
         
         SwitchState(GameLogicState.Travelling);
     }
     
-    public void SwitchToShip()
+    public void PlayerBoardShip()
     {
+        universeView.Universe.Ship.BeamUpAvatar(universeView.Universe.Avatar);
+        
         SwitchState(GameLogicState.PlayingShip);
     }
 
-    public void SwitchToAvatar()
+    public void PlayerLeaveShip(Planet planet)
     {
+        universeView.Universe.Ship.BeamDownAvatar(universeView.Universe.Avatar, planet);
+        
         SwitchState(GameLogicState.PlayingAvatar);
     }
 }

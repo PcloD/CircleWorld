@@ -4,11 +4,6 @@ using UniverseEngine;
 
 public class ShipView : UniverseObjectView
 {
-    public override void OnParentChanged (TilemapCircle parent)
-    {
-        base.OnParentChanged (parent);
-    }
-
     public override void OnDrawGizmos ()
     {
         float sizeY = 1.0f;

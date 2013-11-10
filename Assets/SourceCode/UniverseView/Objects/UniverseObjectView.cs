@@ -50,13 +50,24 @@ public class UniverseObjectView : MonoBehaviour, IUniverseObjectListener
     public virtual void OnParentChanged(TilemapCircle parent)
     {
         parentView = universeView.GetPlanetView(universeObject.parent);
+        
+        UpdatePosition();
     }
 
     protected void UpdatePosition()
     {
-        trans.localPosition = universeObject.Position;
-        trans.localScale = Vector3.one * universeObject.Scale;
-        trans.localRotation = Quaternion.AngleAxis(-universeObject.Rotation * Mathf.Rad2Deg, Vector3.forward);
+        if (universeObject.Visible)
+        {
+            gameObject.SetActive(true);
+            
+            trans.localPosition = universeObject.Position;
+            trans.localScale = Vector3.one * universeObject.Scale;
+            trans.localRotation = Quaternion.AngleAxis(-universeObject.Rotation * Mathf.Rad2Deg, Vector3.forward);
+        }
+        else
+        {
+            gameObject.SetActive(false);
+        }
     }
 
     public virtual void OnDrawGizmosSelected()

@@ -7,13 +7,18 @@ namespace UniverseEngine
     {
         public ShipInput input = new ShipInput();
         
-        private float movementSpeedMax = 50.0f;
+        private float movementSpeedMax = 100.0f;
         private float movementAcceleration = 100.0f;
         private float movementFriction = 200.0f;
         
         private float rotationSpeedMax = 135.0f * Mathf.Deg2Rad;
         private float rotationAcceleration = 360.0f * Mathf.Deg2Rad;
         private float rotationFriction = 360.0f * Mathf.Deg2Rad;
+        
+        public Ship()
+        {
+            useGravity = false;
+        }
                 
         protected override void OnUpdate(float deltaTime)
         {
@@ -37,6 +42,23 @@ namespace UniverseEngine
             velocity.y = Mathf.Cos(Rotation) * currentSpeed;
             
             input.Reset();
+        }
+        
+        public void BeamDownAvatar(Avatar avatar, Planet planet)
+        {
+            rotationVelocity = 0.0f;
+            velocity = Vector2.zero;
+            
+            SetParent(planet, FollowParentParameters.None, position, rotation);
+            
+            avatar.TravelToPlanet(planet);
+        }
+        
+        public void BeamUpAvatar(Avatar avatar)
+        {
+            SetParent(null, FollowParentParameters.None, position, rotation);
+            
+            avatar.BoardShip(this);
         }
     }
 }

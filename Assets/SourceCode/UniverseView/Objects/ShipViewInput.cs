@@ -113,8 +113,12 @@ public class ShipViewInput : MonoBehaviour
         
         //Draw switch to avatar button
         InputAreas.AddInputArea(new Rect(Screen.width - (Screen.width / 8) * 3.0f, 0, Screen.width / 8, Screen.height / 8));
-        if (GUI.Button(new Rect(Screen.width - (Screen.width / 8) * 3.0f, 0, Screen.width / 8, Screen.height / 8), "TO AVATAR"))
-            GameLogic.Instace.SwitchToAvatar();
+        if (GUI.Button(new Rect(Screen.width - (Screen.width / 8) * 3.0f, 0, Screen.width / 8, Screen.height / 8), "LEAVE SHIP"))
+        {
+            int clickedThingIndex = shipView.UniverseView.Universe.FindClosestRenderedThing(shipView.UniverseObject.Position, 30.0f);
+            if (clickedThingIndex >= 0)
+                GameLogic.Instace.PlayerLeaveShip(shipView.UniverseView.Universe.GetPlanet((ushort) clickedThingIndex));
+        }
     }
 #endif
 

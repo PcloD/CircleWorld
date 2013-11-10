@@ -236,9 +236,9 @@ public class AvatarViewInput : MonoBehaviour
         }
         
         //Draw travel button
-        InputAreas.AddInputArea(new Rect(Screen.width - (Screen.width / 8) * 2.0f, 0, Screen.width / 8, Screen.height / 8));
-        if (GUI.Button(new Rect(Screen.width - (Screen.width / 8) * 2.0f, 0, Screen.width / 8, Screen.height / 8), "TRAVEL"))
-            mode = AvatarInputMode.TravelToPlanet;
+        //InputAreas.AddInputArea(new Rect(Screen.width - (Screen.width / 8) * 2.0f, 0, Screen.width / 8, Screen.height / 8));
+        //if (GUI.Button(new Rect(Screen.width - (Screen.width / 8) * 2.0f, 0, Screen.width / 8, Screen.height / 8), "TRAVEL"))
+        //    mode = AvatarInputMode.TravelToPlanet;
         
         //Draw edit button
         InputAreas.AddInputArea(new Rect(Screen.width - Screen.width / 8, 0, Screen.width / 8, Screen.height / 8));
@@ -250,8 +250,8 @@ public class AvatarViewInput : MonoBehaviour
         
         //Draw switch to ship button
         InputAreas.AddInputArea(new Rect(Screen.width - (Screen.width / 8) * 3.0f, 0, Screen.width / 8, Screen.height / 8));
-        if (GUI.Button(new Rect(Screen.width - (Screen.width / 8) * 3.0f, 0, Screen.width / 8, Screen.height / 8), "TO SHIP"))
-            GameLogic.Instace.SwitchToShip();
+        if (GUI.Button(new Rect(Screen.width - (Screen.width / 8) * 3.0f, 0, Screen.width / 8, Screen.height / 8), "BOARD SHIP"))
+            GameLogic.Instace.PlayerBoardShip();
     }
 #endif
 
