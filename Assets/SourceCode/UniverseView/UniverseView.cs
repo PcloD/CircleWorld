@@ -6,7 +6,7 @@ public class UniverseView : MonoBehaviour, IUniverseListener
 {
     public UniverseViewFactory universeFactory;
     
-    public int MaxActivePlanetViews = 2;
+    public int MaxActivePlanetViews = 5;
     
     [HideInInspector]
     [System.NonSerialized]

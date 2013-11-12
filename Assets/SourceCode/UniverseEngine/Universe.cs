@@ -327,8 +327,28 @@ namespace UniverseEngine
                     toReturn.Add(thingsToRender[i]);
             }
             
+            ThingDistanceComparerReference = worldPos;
+            toReturn.Sort(ThingDistanceComparer);
+            
             return toReturn;
-        }        
+        }
+        
+        private Vector2 ThingDistanceComparerReference;
+        
+        private int ThingDistanceComparer(ushort index1, ushort index2)
+        {
+            Vector2 p1 = new Vector2(thingsPositions[index1].x, thingsPositions[index1].y) - ThingDistanceComparerReference;
+            Vector2 p2 = new Vector2(thingsPositions[index2].x, thingsPositions[index2].y) - ThingDistanceComparerReference;
+            
+            float diff = p1.sqrMagnitude - p2.sqrMagnitude;
+            
+            if (diff < 0)
+                return -1;
+            else if (diff > 0)
+                return 1;
+            else
+                return 0;
+        }
     }
 }
 
