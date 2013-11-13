@@ -6,7 +6,7 @@ namespace SpriteMeshEngine
     public class SpriteSheet
     {
         private string id;
-        private Sprite[] sprites;
+        private SpriteDefinition[] sprites;
         private Texture2D texture;
         private Material defaultMaterial;
         
@@ -25,19 +25,8 @@ namespace SpriteMeshEngine
                 return texture; 
             }
         }
-        
-        public Material DefaultMaterial
-        {
-            get
-            {
-                if (defaultMaterial == null)
-                    defaultMaterial = CreateDefaultMaterial();
                 
-                return defaultMaterial;
-            }
-        }
-        
-        public SpriteSheet(string id, Sprite[] sprites)
+        public SpriteSheet(string id, SpriteDefinition[] sprites)
         {
             this.id = id;
             this.sprites = sprites;
@@ -48,12 +37,12 @@ namespace SpriteMeshEngine
             return sprites.Length;
         }
         
-        public Sprite GetSprite(int index)
+        public SpriteDefinition GetSpriteDefinition(int index)
         {
             return sprites[index];
         }
         
-        public Sprite GetSprite(string id)
+        public SpriteDefinition GetSpriteDefinition(string id)
         {
             for (int i = 0; i < sprites.Length; i++)
                 if (sprites[i].Id == id)
@@ -62,6 +51,16 @@ namespace SpriteMeshEngine
             return null;
         }
         
+        public Sprite GetSprite(int index)
+        {
+            return GetSpriteDefinition(index).Sprite;
+        }
+
+        public Sprite GetSprite(string id)
+        {
+            return GetSpriteDefinition(id).Sprite;
+        }
+
         private Texture2D LoadTexture()
         {
             return (Texture2D) Resources.Load(SpriteSheetManager.SPRITE_SHEET_TEXTURE_FOLDER + id, typeof(Texture2D));

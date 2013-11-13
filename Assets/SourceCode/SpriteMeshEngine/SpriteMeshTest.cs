@@ -22,7 +22,7 @@ public class SpriteMeshTest : SpriteMeshView
 
             for (int i = 0; i < spriteSheet.GetSpriteCount(); i++)
             {
-                Sprite sprite = spriteSheet.GetSprite((i + j) % spriteSheet.GetSpriteCount());
+                SpriteMeshEngine.SpriteDefinition sprite = spriteSheet.GetSpriteDefinition((i + j) % spriteSheet.GetSpriteCount());
 
                 spriteMesh.AddSprite(sprite, offsetX, offsetY, sprite.SizeX, sprite.SizeY, Color.white);
 

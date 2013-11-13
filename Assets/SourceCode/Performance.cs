@@ -29,6 +29,8 @@ public class Performance : MonoBehaviour
             time = 0.0f;
             frames = 0;
 
+            performance = (System.GC.GetTotalMemory(false) / 1024).ToString();
+
             performance = string.Format("{0} kb\n{1} fps\nUpdatePositions {2} ms\nUpdateMesh {3} ms", 
                     System.GC.GetTotalMemory(false) / 1024,
                     fps,

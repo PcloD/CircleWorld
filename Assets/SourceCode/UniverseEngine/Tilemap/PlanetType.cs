@@ -10,7 +10,7 @@ namespace UniverseEngine
         
         public byte mainTileId;
         
-        public Sprite planetSprite;
+        public SpriteMeshEngine.SpriteDefinition planetSprite;
         
         public Color32 backColorFrom;
         public Color32 backColorTo;

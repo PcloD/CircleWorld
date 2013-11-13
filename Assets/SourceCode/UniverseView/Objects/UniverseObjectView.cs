@@ -6,6 +6,9 @@ public class UniverseObjectView : MonoBehaviour, IUniverseObjectListener
     protected UniverseObject universeObject;
     protected UniverseView universeView;
     protected TilemapCircleView parentView;
+
+    protected GameObject go;
+    protected bool visible = true;
     
     [HideInInspector]
     public Transform trans;
@@ -28,6 +31,7 @@ public class UniverseObjectView : MonoBehaviour, IUniverseObjectListener
     public void Awake()
     {
         trans = transform;
+        go = gameObject;
     }
     
     public void Init(UniverseObject universeObject, UniverseView universeView)
@@ -58,15 +62,23 @@ public class UniverseObjectView : MonoBehaviour, IUniverseObjectListener
     {
         if (universeObject.Visible)
         {
-            gameObject.SetActive(true);
-            
+            if (!visible)
+            {
+                visible = true;
+                go.SetActive(true);
+            }
+
             trans.localPosition = universeObject.Position;
             trans.localScale = Vector3.one * universeObject.Scale;
             trans.localRotation = Quaternion.AngleAxis(-universeObject.Rotation * Mathf.Rad2Deg, Vector3.forward);
         }
         else
         {
-            gameObject.SetActive(false);
+            if (visible)
+            {
+                visible = false;
+                go.SetActive(false);
+            }
         }
     }
 

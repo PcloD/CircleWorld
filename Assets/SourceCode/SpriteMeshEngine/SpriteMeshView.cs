@@ -25,7 +25,7 @@ public class SpriteMeshView : MonoBehaviour
             {
                 spriteSheet = GetSpritesheet();
                 
-                renderer.sharedMaterial = spriteSheet.DefaultMaterial;
+                //renderer.sharedMaterial = spriteSheet.DefaultMaterial;
             }
 
             return spriteSheet; 

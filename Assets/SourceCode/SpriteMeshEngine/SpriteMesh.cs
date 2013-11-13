@@ -160,7 +160,7 @@ namespace SpriteMeshEngine
         }
 
         public void AddSprite(
-            Sprite sprite, 
+            SpriteDefinition sprite, 
             float x, float y, 
             float sizeX, float sizeY,
             Color32 color)

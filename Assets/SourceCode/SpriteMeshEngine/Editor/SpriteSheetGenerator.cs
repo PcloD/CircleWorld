@@ -54,12 +54,12 @@ public class SpriteSheetGenerator
 				
 				File.WriteAllBytes(packedTextureFilename, packedTextureBytes);
 				
-				Sprite[] sprites = new Sprite[spriteTextures.Count];
+				SpriteMeshEngine.SpriteDefinition[] sprites = new SpriteMeshEngine.SpriteDefinition[spriteTextures.Count];
 				
 				SpriteSheet spriteSheet = new SpriteSheet(spriteSheetId, sprites);
 				
 				for (int i = 0; i < sprites.Length; i++)
-					sprites[i] = new Sprite(spriteIds[i], spriteTextures[i].width, spriteTextures[i].height, uvs[i], spriteSheet);
+					sprites[i] = new SpriteMeshEngine.SpriteDefinition(spriteIds[i], spriteTextures[i].width, spriteTextures[i].height, uvs[i], spriteSheet);
 				spriteSheets.Add(spriteSheet);
 				
 				Debug.Log(packedTextureFilename + " : Added " + sprites.Length + " Sprites");
@@ -73,9 +73,117 @@ public class SpriteSheetGenerator
 		Debug.Log("--- Finished spritesheet update ---");
 		
 		AssetDatabase.Refresh();
-    }
-	
-	
+
+		Debug.Log("--- Generating Unity Sprites ---");
+
+		for (int i = 0; i < SpriteSheetManager.GetSpriteSheetCount(); i++)
+		{
+			SpriteSheet spriteSheet = SpriteSheetManager.GetSpriteSheet(i);
+
+			Texture2D spriteSheetTexture = spriteSheet.Texture;
+
+			string path = AssetDatabase.GetAssetPath(spriteSheetTexture);
+			TextureImporter textureImporter = AssetImporter.GetAtPath(path) as TextureImporter;
+						
+			//Disable spritesheet and reimport, if we don't do this, Unity won't take any changes made to the spritesheet definition (BUG in unity?)
+			textureImporter.spriteImportMode = SpriteImportMode.None;
+			AssetDatabase.ImportAsset(path);
+			
+			//Now calculate the new spritesheets
+			SpriteMetaData[] spriteMetaDatas = new SpriteMetaData[spriteSheet.GetSpriteCount()];
+			
+			int textureWidth = spriteSheetTexture.width;
+			int textureHeight = spriteSheetTexture.height;
+			
+			if ((textureWidth >= textureHeight) && textureWidth > textureImporter.maxTextureSize)
+			{
+				float scale = textureWidth / textureImporter.maxTextureSize;
+				
+				textureWidth = textureImporter.maxTextureSize;
+				textureHeight = Mathf.RoundToInt(textureHeight / scale);
+			}
+			else if ((textureHeight >= textureWidth) && textureHeight > textureImporter.maxTextureSize)
+			{
+				float scale = textureHeight / textureImporter.maxTextureSize;
+				
+				textureHeight = textureImporter.maxTextureSize;
+				textureWidth = Mathf.RoundToInt(textureWidth / scale);
+			}
+			
+			for (int j = 0; j < spriteSheet.GetSpriteCount(); j++)
+			{
+				SpriteDefinition spriteDefinition = spriteSheet.GetSpriteDefinition(j);
+				
+				SpriteMetaData metaData = new SpriteMetaData();
+
+				metaData.name = spriteDefinition.Id;
+				metaData.alignment = (int) SpriteAlignment.BottomLeft;
+				metaData.pivot = Vector2.zero;
+				metaData.rect = spriteDefinition.UV;
+				metaData.rect.x *= textureWidth;
+				metaData.rect.y *= textureHeight;
+				metaData.rect.width *= textureWidth;
+				metaData.rect.height *= textureHeight;
+				
+				spriteMetaDatas[j] = metaData;
+			}
+
+			textureImporter.textureType = TextureImporterType.Sprite;
+			textureImporter.npotScale = TextureImporterNPOTScale.None;
+			textureImporter.alphaIsTransparency = true;
+			textureImporter.spriteImportMode = SpriteImportMode.Multiple;
+			textureImporter.spritePixelsToUnits = 1;
+			textureImporter.spritePackingTag = "";
+			textureImporter.spritePivot = Vector2.zero;
+			textureImporter.spritesheet = spriteMetaDatas;
+			
+			AssetDatabase.ImportAsset(path);
+		}
+
+		Debug.Log("--- Finished generating Unity Sprites ---");
+
+		Debug.Log("--- Updating sprite cache ---");
+
+		GameObject spriteCachePrefab = Resources.Load<GameObject>("Spritesheets/SpriteCache");
+
+		List<SpriteCacheEntry> cacheEntries = new List<SpriteCacheEntry>();
+
+		if (spriteCachePrefab)
+		{
+			SpriteCache spriteCache = spriteCachePrefab.GetComponent<SpriteCache>();
+
+			for (int i = 0; i < SpriteSheetManager.GetSpriteSheetCount(); i++)
+			{
+				SpriteSheet spriteSheet = SpriteSheetManager.GetSpriteSheet(i);
+				
+				Texture2D spriteSheetTexture = spriteSheet.Texture;
+				
+				string path = AssetDatabase.GetAssetPath(spriteSheetTexture);
+
+				List<Sprite> sprites = new List<Sprite>();
+
+				foreach(Object obj in AssetDatabase.LoadAllAssetsAtPath(path))
+					if (obj is Sprite)
+						sprites.Add((Sprite) obj);
+
+				SpriteCacheEntry cacheEntry = new SpriteCacheEntry();
+				cacheEntry.spritesheetId = spriteSheet.Id;
+				cacheEntry.sprites = sprites.ToArray();
+
+				cacheEntries.Add(cacheEntry);
+			}
+
+			spriteCache.cacheEntries = cacheEntries.ToArray();
+
+			EditorUtility.SetDirty(spriteCache);
+		}
+		else
+		{
+			Debug.LogError("Sprite cache prefab not found!!!");
+		}
+
+		Debug.Log("--- Finished updating sprite cache ---");
+    }	
 }
 
 

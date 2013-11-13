@@ -8,7 +8,7 @@ TextureImporter:
     linearTexture: 0
     correctGamma: 0
     fadeOut: 0
-    borderMipMap: 1
+    borderMipMap: 0
     mipMapFadeDistanceStart: 1
     mipMapFadeDistanceEnd: 3
   bumpmap:
@@ -24,13 +24,130 @@ TextureImporter:
   maxTextureSize: 1024
   textureSettings:
     filterMode: 0
-    aniso: 0
+    aniso: 1
     mipBias: -1
     wrapMode: 1
-  nPOTScale: 1
+  nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0, y: 0}
+  spritePixelsToUnits: 1
   alphaIsTransparency: 1
-  textureType: 5
+  textureType: 8
   buildTargetSettings: []
+  spriteSheet:
+    sprites:
+    - name: grassCenter
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 70
+        height: 70
+      alignment: 6
+      pivot: {x: 0, y: 0}
+    - name: grassMid
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 0
+        width: 70
+        height: 70
+      alignment: 6
+      pivot: {x: 0, y: 0}
+    - name: sandCenter
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 0
+        width: 70
+        height: 70
+      alignment: 6
+      pivot: {x: 0, y: 0}
+    - name: sandMid
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 72
+        width: 70
+        height: 70
+      alignment: 6
+      pivot: {x: 0, y: 0}
+    - name: snowCenter
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 72
+        width: 70
+        height: 70
+      alignment: 6
+      pivot: {x: 0, y: 0}
+    - name: snowMid
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 72
+        width: 70
+        height: 70
+      alignment: 6
+      pivot: {x: 0, y: 0}
+    - name: stoneCenter
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 144
+        width: 70
+        height: 70
+      alignment: 6
+      pivot: {x: 0, y: 0}
+    - name: stoneMid
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 144
+        width: 70
+        height: 70
+      alignment: 6
+      pivot: {x: 0, y: 0}
+    - name: sun1Center
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 144
+        width: 70
+        height: 70
+      alignment: 6
+      pivot: {x: 0, y: 0}
+    - name: sun1Mid
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 216
+        width: 70
+        height: 70
+      alignment: 6
+      pivot: {x: 0, y: 0}
+    - name: sun2Center
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 216
+        width: 70
+        height: 70
+      alignment: 6
+      pivot: {x: 0, y: 0}
+    - name: sun2Mid
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 216
+        width: 70
+        height: 70
+      alignment: 6
+      pivot: {x: 0, y: 0}
+  spritePackingTag: 
   userData: 

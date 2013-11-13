@@ -82,6 +82,9 @@ public class UniverseView : MonoBehaviour, IUniverseListener
     
     public bool ExistsPlanetView(TilemapCircle tilemapCircle)
     {
+        if (tilemapCircle is Planet)
+            return planetViews[((Planet) tilemapCircle).ThingIndex] != null;
+        
         return false;
     }
     

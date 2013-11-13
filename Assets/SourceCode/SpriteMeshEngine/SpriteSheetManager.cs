@@ -12,7 +12,22 @@ namespace SpriteMeshEngine
         static private bool initialized;
         static private SpriteSheet[] spriteSheets;
         static private Dictionary<string, SpriteSheet> spriteSheetsById = new Dictionary<string, SpriteSheet>();
+        static private SpriteCache spriteCache;
+
+        static public int GetSpriteSheetCount()
+        {
+            InitSpriteSheets();
+
+            return spriteSheets.Length;
+        }
         
+        static public SpriteSheet GetSpriteSheet(int index)
+        {
+            InitSpriteSheets();
+            
+            return spriteSheets[index];
+        }
+
         static public SpriteSheet GetSpriteSheet(string id)
         {
             InitSpriteSheets();
@@ -36,6 +51,8 @@ namespace SpriteMeshEngine
             }
             
             spriteSheetsById.Clear();
+
+            spriteCache = null;
             
             initialized = false;
         }
@@ -77,7 +94,7 @@ namespace SpriteMeshEngine
             {
                 string id = reader.ReadString();
                 int spriteCount = reader.ReadInt32();
-                Sprite[] sprites = new Sprite[spriteCount];
+                SpriteDefinition[] sprites = new SpriteDefinition[spriteCount];
                 
                 spriteSheets[i] = new SpriteSheet(id, sprites);
                 
@@ -91,7 +108,7 @@ namespace SpriteMeshEngine
                     float spriteUVwidth = reader.ReadSingle();
                     float spriteUVheight = reader.ReadSingle();
                     
-                    sprites[j] = new Sprite(spriteId, spriteSizeX, spriteSizeY, new Rect(spriteUVx, spriteUVy, spriteUVwidth, spriteUVheight), spriteSheets[i]);
+                    sprites[j] = new SpriteDefinition(spriteId, spriteSizeX, spriteSizeY, new Rect(spriteUVx, spriteUVy, spriteUVwidth, spriteUVheight), spriteSheets[i]);
                 }
             }
             
@@ -117,7 +134,7 @@ namespace SpriteMeshEngine
                 
                 for (int j = 0; j < spriteSheet.GetSpriteCount(); j++)
                 {
-                    Sprite sprite = spriteSheet.GetSprite(j);
+                    SpriteDefinition sprite = spriteSheet.GetSpriteDefinition(j);
                     
                     writer.Write((string) sprite.Id);
                     writer.Write((int) sprite.SizeX);
@@ -132,6 +149,14 @@ namespace SpriteMeshEngine
             writer.Flush();
             
             return ms.ToArray();
+        }
+
+        static public SpriteCache GetSpriteCache()
+        {
+            if (spriteCache == null)
+                spriteCache = Resources.Load<GameObject>("Spritesheets/SpriteCache").GetComponent<SpriteCache>();
+
+            return spriteCache;
         }
     }
 }

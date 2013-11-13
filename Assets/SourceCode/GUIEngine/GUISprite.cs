@@ -7,12 +7,12 @@ namespace GUIEngine
     {
         public string spriteId = "";
 
-        private Sprite sprite;
+        private SpriteMeshEngine.SpriteDefinition sprite;
 
         protected override void OnInit()
         {
             if (!string.IsNullOrEmpty(spriteId))
-                sprite = panel.SpriteSheet.GetSprite(spriteId);
+                sprite = panel.SpriteSheet.GetSpriteDefinition(spriteId);
             else
                 sprite = null;
         }

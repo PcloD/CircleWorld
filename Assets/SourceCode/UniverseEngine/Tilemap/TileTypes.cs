@@ -50,7 +50,7 @@ namespace UniverseEngine
         {
             TileSubtype subtype = new TileSubtype();
             
-            UnityEngine.Rect rect = tilemapSpriteSheet.GetSprite(id).UV;
+            UnityEngine.Rect rect = tilemapSpriteSheet.GetSpriteDefinition(id).UV;
             
             subtype.uvFromX = rect.xMin;
             subtype.uvToX = rect.xMax;

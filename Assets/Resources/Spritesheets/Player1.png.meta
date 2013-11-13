@@ -4,7 +4,7 @@ TextureImporter:
   serializedVersion: 2
   mipmaps:
     mipMapMode: 0
-    enableMipMap: 1
+    enableMipMap: 0
     linearTexture: 0
     correctGamma: 0
     fadeOut: 0
@@ -24,13 +24,166 @@ TextureImporter:
   maxTextureSize: 1024
   textureSettings:
     filterMode: 1
-    aniso: 0
+    aniso: 1
     mipBias: -1
     wrapMode: 1
-  nPOTScale: 1
+  nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0, y: 0}
+  spritePixelsToUnits: 1
   alphaIsTransparency: 1
-  textureType: 0
+  textureType: 8
   buildTargetSettings: []
+  spriteSheet:
+    sprites:
+    - name: p1_duck
+      rect:
+        serializedVersion: 2
+        x: 148
+        y: 99
+        width: 69
+        height: 71
+      alignment: 6
+      pivot: {x: 0, y: 0}
+    - name: p1_front
+      rect:
+        serializedVersion: 2
+        x: 444
+        y: 0
+        width: 66
+        height: 92
+      alignment: 6
+      pivot: {x: 0, y: 0}
+    - name: p1_hurt
+      rect:
+        serializedVersion: 2
+        x: 74
+        y: 198
+        width: 69
+        height: 92
+      alignment: 6
+      pivot: {x: 0, y: 0}
+    - name: p1_jump
+      rect:
+        serializedVersion: 2
+        x: 74
+        y: 292
+        width: 67
+        height: 94
+      alignment: 6
+      pivot: {x: 0, y: 0}
+    - name: p1_stand
+      rect:
+        serializedVersion: 2
+        x: 74
+        y: 388
+        width: 66
+        height: 92
+      alignment: 6
+      pivot: {x: 0, y: 0}
+    - name: p1_walk01
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 72
+        height: 97
+      alignment: 6
+      pivot: {x: 0, y: 0}
+    - name: p1_walk02
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 99
+        width: 72
+        height: 97
+      alignment: 6
+      pivot: {x: 0, y: 0}
+    - name: p1_walk03
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 198
+        width: 72
+        height: 97
+      alignment: 6
+      pivot: {x: 0, y: 0}
+    - name: p1_walk04
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 297
+        width: 72
+        height: 97
+      alignment: 6
+      pivot: {x: 0, y: 0}
+    - name: p1_walk05
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 396
+        width: 72
+        height: 97
+      alignment: 6
+      pivot: {x: 0, y: 0}
+    - name: p1_walk06
+      rect:
+        serializedVersion: 2
+        x: 74
+        y: 0
+        width: 72
+        height: 97
+      alignment: 6
+      pivot: {x: 0, y: 0}
+    - name: p1_walk07
+      rect:
+        serializedVersion: 2
+        x: 148
+        y: 0
+        width: 72
+        height: 97
+      alignment: 6
+      pivot: {x: 0, y: 0}
+    - name: p1_walk08
+      rect:
+        serializedVersion: 2
+        x: 222
+        y: 0
+        width: 72
+        height: 97
+      alignment: 6
+      pivot: {x: 0, y: 0}
+    - name: p1_walk09
+      rect:
+        serializedVersion: 2
+        x: 296
+        y: 0
+        width: 72
+        height: 97
+      alignment: 6
+      pivot: {x: 0, y: 0}
+    - name: p1_walk10
+      rect:
+        serializedVersion: 2
+        x: 370
+        y: 0
+        width: 72
+        height: 97
+      alignment: 6
+      pivot: {x: 0, y: 0}
+    - name: p1_walk11
+      rect:
+        serializedVersion: 2
+        x: 74
+        y: 99
+        width: 72
+        height: 97
+      alignment: 6
+      pivot: {x: 0, y: 0}
+  spritePackingTag: 
   userData: 

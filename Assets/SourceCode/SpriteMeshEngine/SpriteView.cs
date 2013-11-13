@@ -3,7 +3,7 @@ using SpriteMeshEngine;
 using GUIEngine;
 
 [ExecuteInEditMode]
-[RequireComponent(typeof(MeshRenderer), typeof(MeshFilter))]
+[RequireComponent(typeof(SpriteRenderer))]
 public class SpriteView : MonoBehaviour
 {
     public string spriteSheetId;
@@ -15,100 +15,73 @@ public class SpriteView : MonoBehaviour
     public int maxWidth = 0;
     public int maxHeight = 0;
 
-    private SpriteMesh spriteMesh;
-    
+    private SpriteRenderer spriteRenderer;
+
 #if UNITY_EDITOR
     public void Update()
     {
         if (!Application.isPlaying)
-            UpdateMesh();
+            UpdateSprite();
     }
 #endif
     
     public void Start()
     {
-        UpdateMesh();
+        UpdateSprite();
     }
     
-    public void UpdateMesh(string spriteSheedId, string spriteId)
+    public void UpdateSprite(string spriteSheedId, string spriteId)
     {
         if (spriteSheedId != this.spriteSheetId || spriteId != this.spriteId)
         {
             this.spriteSheetId = spriteSheedId;
             this.spriteId = spriteId;
             
-            UpdateMesh();
+            UpdateSprite();
         }
     }
     
-    public void UpdateMesh()
+    public void UpdateSprite()
     {
-        renderer.enabled = false;
-        
+        if (!spriteRenderer)
+            spriteRenderer = GetComponent<SpriteRenderer>();
+
         if (string.IsNullOrEmpty(spriteSheetId))
+        {
+            spriteRenderer.enabled = false;
             return;
+        }
             
         if (string.IsNullOrEmpty(spriteId))
+        {
+            spriteRenderer.enabled = false;
             return;
+        }
             
         SpriteSheet spriteSheet = SpriteSheetManager.GetSpriteSheet(spriteSheetId);
             
         if (spriteSheet == null)
-            return;
-        
-        Sprite sprite = spriteSheet.GetSprite(spriteId);
-        
-        if (sprite == null)
-            return;
-        
-        if (spriteMesh == null)
-            spriteMesh = new SpriteMesh();
-
-        renderer.sharedMaterial = sprite.SpriteSheet.DefaultMaterial;
-        renderer.enabled = true;
-        
-        float sizeX = sprite.SizeX;
-        float sizeY = sprite.SizeY;
-        
-        float x = 0;
-        float y = 0;
-        
-        switch(verticalAlignment)
         {
-            case GUIAlignVertical.Top:
-                y = 0;
-                break;
-            case GUIAlignVertical.Center:
-                y = -sizeY / 2.0f;
-                break;
-            case GUIAlignVertical.Bottom:
-                y = -sizeY;
-                break;
-        }
-
-        switch(horizontalAlignment)
-        {
-            case GUIAlignHorizontal.Left:
-                x = 0;
-                break;
-            case GUIAlignHorizontal.Center:
-                x = -sizeX / 2.0f;
-                break;
-            case GUIAlignHorizontal.Right:
-                x = -sizeX;
-                break;
+            spriteRenderer.enabled = false;
+            return;
         }
         
-        spriteMesh.BeginCalculateSize();
-        spriteMesh.AddSprite(sprite, x, y, sizeX, sizeY, Color.white);
-        SpriteMeshInfo meshInfo = spriteMesh.End();
-        spriteMesh.Begin(meshInfo);
-        spriteMesh.AddSprite(sprite, x, y, sizeX, sizeY, Color.white);
-        spriteMesh.End();
-        spriteMesh.Apply();
+        SpriteMeshEngine.SpriteDefinition spriteDefinition = spriteSheet.GetSpriteDefinition(spriteId);
         
-        GetComponent<MeshFilter>().sharedMesh = spriteMesh.Mesh;
-        
+        if (spriteDefinition == null)
+        {
+            spriteRenderer.enabled = false;
+            return;
+        }
+
+        spriteRenderer.sprite = spriteDefinition.Sprite;
+        spriteRenderer.enabled = true;
+
+        float sizeX = spriteDefinition.SizeX;
+        float sizeY = spriteDefinition.SizeY;
+
+        Vector3 localScale = transform.localScale;
+
         if (maxWidth > 0 || maxHeight > 0)
         {
             float scaleX = 1.0f;
@@ -123,9 +96,53 @@ public class SpriteView : MonoBehaviour
             float scale = Mathf.Max(scaleX, scaleY);
             if (scale < 0.01f)
                 scale = 0.01f;
-            
-            transform.localScale = Vector3.one * (1.0f / scale);
+
+            localScale = Vector3.one * (1.0f / scale);
+            transform.localScale = localScale;
         }
+
+        if (verticalAlignment != GUIAlignVertical.None || horizontalAlignment != GUIAlignHorizontal.None)
+        {
+            float x = 0;
+            float y = 0;
+            
+            switch(verticalAlignment)
+            {
+                case GUIAlignVertical.Bottom:
+                    y = 0;
+                    break;
+                case GUIAlignVertical.Center:
+                    y = (-sizeY / 2.0f) * localScale.y;
+                    break;
+                case GUIAlignVertical.Top:
+                    y = -sizeY * localScale.y;
+                    break;
+            }
+
+            switch(horizontalAlignment)
+            {
+                case GUIAlignHorizontal.Left:
+                    x = 0;
+                    break;
+                case GUIAlignHorizontal.Center:
+                    x = (-sizeX / 2.0f) * localScale.x;
+                    break;
+                case GUIAlignHorizontal.Right:
+                    x = -sizeX * localScale.x;
+                    break;
+            }
+
+            float localRotation = transform.localRotation.eulerAngles.z * Mathf.Deg2Rad;
+            
+            float cosLocalRotation = Mathf.Cos(localRotation);
+            float sinLocalRotation = Mathf.Sin(localRotation);
+
+            transform.localPosition = new Vector3(
+                x * cosLocalRotation - y * sinLocalRotation, 
+                x * sinLocalRotation + y * cosLocalRotation, 
+                0);
+        }
+
     }
     
     public void OnDrawGizmosSelected()
@@ -139,7 +156,7 @@ public class SpriteView : MonoBehaviour
         {
             Gizmos.color = Color.red;
             Gizmos.matrix = transform.localToWorldMatrix;
-            Gizmos.DrawWireCube(Vector3.zero, new Vector3(maxWidth / transform.localScale.x, maxHeight / transform.localScale.y, 1.0f));
+            Gizmos.DrawWireCube(new Vector3(-transform.localPosition.x / transform.localScale.x, -transform.localPosition.y / transform.localScale.y, 0.0f), new Vector3(maxWidth / transform.localScale.x, maxHeight / transform.localScale.y, 1.0f));
         }
     }
 }
