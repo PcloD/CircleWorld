@@ -62,7 +62,7 @@ public class NearPlanetsArrows : MonoBehaviour
         
         closeThings = universeView.Universe.FindClosestRenderedThings(followingObjectView.UniverseObject.Position, searchRadius, closeThings);
 
-        float arrowDistance = new Vector2(Screen.width, Screen.height).magnitude * 0.25f;
+        float arrowDistance = new Vector2(Screen.width, Screen.height).magnitude / 6.0f;
 
         int newActiveArrows = 0;
         
